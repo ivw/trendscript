@@ -1,10 +1,10 @@
-import { addDays, startOfDay } from "date-fns";
+import { addDays, startOfDay } from "date-fns"
 
-export type State = { [key: string]: number };
+export type State = { [key: string]: number }
 
 export type Rule = {
-  mutateState: (date: Date, state: State) => void;
-};
+  mutateState: (date: Date, state: State) => void
+}
 
 export function evaluateRulesForDateRange(
   initialState: State,
@@ -12,16 +12,16 @@ export function evaluateRulesForDateRange(
   startDate: Date,
   nrDays: number
 ): Array<State> {
-  const result: Array<State> = [];
+  const result: Array<State> = []
 
-  let date: Date = startOfDay(startDate);
-  let stateOfDay: State = initialState;
+  let date: Date = startOfDay(startDate)
+  let stateOfDay: State = initialState
   while (result.length < nrDays) {
-    stateOfDay = Object.assign({}, stateOfDay);
-    rules.forEach((rule) => rule.mutateState(date, stateOfDay));
+    stateOfDay = Object.assign({}, stateOfDay)
+    rules.forEach((rule) => rule.mutateState(date, stateOfDay))
 
-    date = addDays(date, 1);
-    result.push(stateOfDay);
+    date = addDays(date, 1)
+    result.push(stateOfDay)
   }
-  return result;
+  return result
 }
