@@ -1,4 +1,6 @@
+// TODO can we use specific imports?
 import * as d3 from "d3"
+import { State } from "./evaluate"
 
 const output = document.getElementById("output")!
 
@@ -36,3 +38,7 @@ svg.append("g").attr("transform", `translate(${marginLeft},0)`).call(d3.axisLeft
 
 // Append the SVG element.
 output.append(svg.node()!)
+
+export function render(statesPerDay: Array<State>) {
+  // TODO
+}
