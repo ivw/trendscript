@@ -29,17 +29,18 @@ function update() {
     },
     {
       mutateState: (date, state) => {
-        if (date.getDate() % 2 == 0) {
-          state.foo += 10
+        if (date.getDate() == 1) {
+          state.foo += 50
         }
       },
     },
   ]
   // Feb 02 2000
   const startDate = new Date(2000, 1, 2)
+  const nrDays = 365
 
-  const statesPerDay = evaluateRulesForDateRange(initialState, rules, startDate, 365)
-  render(statesPerDay)
+  const statesPerDay = evaluateRulesForDateRange(initialState, rules, startDate, nrDays)
+  render(statesPerDay, startDate, nrDays, "foo")
 }
 
 update()
