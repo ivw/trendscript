@@ -68,15 +68,6 @@ export function render(
         .attr("x2", width - marginLeft - marginRight)
         .attr("stroke-opacity", 0.1),
     )
-    .call((g) =>
-      g
-        .append("text")
-        .attr("x", -marginLeft)
-        .attr("y", 10)
-        .attr("fill", "currentColor")
-        .attr("text-anchor", "start")
-        .text("↑ Daily close ($)"),
-    )
 
   // Append a path for the line.
   svg

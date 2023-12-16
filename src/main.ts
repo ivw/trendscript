@@ -2,6 +2,7 @@ import "./style.css"
 import "./chart"
 import { render } from "./chart"
 import { Rule, State, evaluateRulesForDateRange } from "./evaluate"
+import { startOfDay } from "date-fns"
 
 const codeInput: HTMLTextAreaElement = document.getElementById("code-input") as HTMLTextAreaElement
 
@@ -36,11 +37,11 @@ function update() {
     },
   ]
   // Feb 02 2000
-  const startDate = new Date(2000, 1, 2)
+  const startDate = startOfDay(new Date())
   const nrDays = 365
 
   const statesPerDay = evaluateRulesForDateRange(initialState, rules, startDate, nrDays)
-  render(statesPerDay, startDate, nrDays, "foo")
+  render(statesPerDay, startDate, nrDays, Object.keys(initialState)[0])
 }
 
 update()

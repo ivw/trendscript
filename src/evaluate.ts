@@ -10,7 +10,7 @@ export function evaluateRulesForDateRange(
   initialState: State,
   rules: Array<Rule>,
   startDate: Date,
-  nrDays: number
+  nrDays: number,
 ): Array<State> {
   const result: Array<State> = []
 
