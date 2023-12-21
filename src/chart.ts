@@ -1,5 +1,8 @@
-// TODO can we use specific imports?
-import * as d3 from "d3"
+import { create } from "d3-selection"
+import { line } from "d3-shape"
+import { scaleTime, scaleLinear } from "d3-scale"
+import { interpolateTurbo } from "d3-scale-chromatic"
+import { axisBottom, axisLeft } from "d3-axis"
 import { GraphData } from "./evaluate"
 import { addDays } from "date-fns"
 
@@ -10,16 +13,10 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     width = 1000 - margin.left - margin.right, // TODO dynamic width
     height = 200 - margin.top - margin.bottom
 
-  const x = d3.scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
-  const y = d3.scaleLinear(graphData.range, [height, 0])
+  const x = scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
+  const y = scaleLinear(graphData.range, [height, 0])
 
-  const line = d3
-    .line<number>()
-    .x((_d, index) => x(addDays(startDate, index)))
-    .y(y)
-
-  const svg = d3
-    .create("svg")
+  const svg = create("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
 
@@ -29,12 +26,11 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     .append("g")
     .attr("transform", `translate(0, ${height})`)
     .call(
-      d3
-        .axisBottom(x)
+      axisBottom(x)
         .ticks(width / 80)
         .tickSizeOuter(0),
     )
-  container.append("g").call(d3.axisLeft(y).ticks(height / 40))
+  container.append("g").call(axisLeft(y).ticks(height / 40))
 
   container
     .selectAll(".line")
@@ -43,10 +39,15 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     .join("path")
     .attr("fill", "none")
     .attr("stroke", (_, stateKeyIndex) =>
-      d3.interpolateTurbo((stateKeyIndex + 1) / (graphData.dataPerStateKey.length + 1)),
+      interpolateTurbo((stateKeyIndex + 1) / (graphData.dataPerStateKey.length + 1)),
     )
     .attr("stroke-width", 1.5)
-    .attr("d", line)
+    .attr(
+      "d",
+      line<number>()
+        .x((_d, index) => x(addDays(startDate, index)))
+        .y(y),
+    )
 
   output.replaceChildren(svg.node()!)
 }
