@@ -1,81 +1,52 @@
 // TODO can we use specific imports?
 import * as d3 from "d3"
-import { State } from "./evaluate"
+import { GraphData } from "./evaluate"
 import { addDays } from "date-fns"
 
 const output = document.getElementById("output")!
 
-export function render(
-  statesPerDay: Array<State>,
-  startDate: Date,
-  nrDays: number,
-  stateKey: string, // TODO multiple keys
-) {
-  // Declare the chart dimensions and margins.
-  const width = 928
-  const height = 200
-  const marginTop = 20
-  const marginRight = 30
-  const marginBottom = 30
-  const marginLeft = 40
+export function render(graphData: GraphData, startDate: Date, nrDays: number) {
+  const margin = { top: 10, right: 30, bottom: 30, left: 60 },
+    width = 1000 - margin.left - margin.right, // TODO dynamic width
+    height = 200 - margin.top - margin.bottom
 
-  const yAccessor = (it: State) => it[stateKey]!
+  const x = d3.scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
+  const y = d3.scaleLinear(graphData.range, [height, 0])
 
-  // Declare the x (horizontal position) scale.
-  const x = d3.scaleTime([startDate, addDays(startDate, nrDays)], [marginLeft, width - marginRight])
-
-  // Declare the y (vertical position) scale.
-  const y = d3.scaleLinear(d3.extent<State, number>(statesPerDay, yAccessor) as [number, number], [
-    height - marginBottom,
-    marginTop,
-  ])
-
-  // Declare the line generator.
   const line = d3
-    .line<State>()
+    .line<number>()
     .x((_d, index) => x(addDays(startDate, index)))
-    .y((d) => y(yAccessor(d)))
+    .y(y)
 
-  // Create the SVG container.
   const svg = d3
     .create("svg")
-    .attr("width", width)
-    .attr("height", height)
-    .attr("viewBox", [0, 0, width, height])
-    .attr("style", "max-width: 100%; height: auto; height: intrinsic;")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
 
-  // Add the x-axis.
-  svg
+  const container = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
+
+  container
     .append("g")
-    .attr("transform", `translate(0,${height - marginBottom})`)
+    .attr("transform", `translate(0, ${height})`)
     .call(
       d3
         .axisBottom(x)
         .ticks(width / 80)
         .tickSizeOuter(0),
     )
+  container.append("g").call(d3.axisLeft(y).ticks(height / 40))
 
-  // Add the y-axis, remove the domain line, add grid lines and a label.
-  svg
-    .append("g")
-    .attr("transform", `translate(${marginLeft},0)`)
-    .call(d3.axisLeft(y).ticks(height / 40))
-    .call((g) => g.select(".domain").remove())
-    .call((g) =>
-      g
-        .selectAll(".tick line")
-        .clone()
-        .attr("x2", width - marginLeft - marginRight)
-        .attr("stroke-opacity", 0.1),
-    )
-
-  // Append a path for the line.
-  svg
+  container
+    .selectAll(".line")
     .append("path")
+    .data(graphData.dataPerStateKey.map((it) => it.valuePerDay))
+    .join("path")
     .attr("fill", "none")
-    .attr("stroke", "steelblue")
+    .attr("stroke", (_, stateKeyIndex) =>
+      d3.interpolateTurbo((stateKeyIndex + 1) / (graphData.dataPerStateKey.length + 1)),
+    )
     .attr("stroke-width", 1.5)
-    .attr("d", line(statesPerDay))
+    .attr("d", line)
 
   output.replaceChildren(svg.node()!)
 }
