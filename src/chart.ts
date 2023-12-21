@@ -1,10 +1,10 @@
+import { axisBottom, axisLeft } from "d3-axis"
+import { scaleLinear, scaleTime } from "d3-scale"
+import { interpolateTurbo } from "d3-scale-chromatic"
 import { create } from "d3-selection"
 import { line } from "d3-shape"
-import { scaleTime, scaleLinear } from "d3-scale"
-import { interpolateTurbo } from "d3-scale-chromatic"
-import { axisBottom, axisLeft } from "d3-axis"
-import { GraphData } from "./evaluate"
 import { addDays } from "date-fns"
+import { GraphData } from "./evaluate"
 
 const output = document.getElementById("output")!
 
@@ -13,24 +13,24 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     width = 1000 - margin.left - margin.right, // TODO dynamic width
     height = 200 - margin.top - margin.bottom
 
-  const x = scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
-  const y = scaleLinear(graphData.range, [height, 0])
+  const xScale = scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
+  const yScale = scaleLinear(graphData.range, [height, 0])
 
   const svg = create("svg")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
 
-  const container = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`)
+  const container = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`)
 
   container
     .append("g")
     .attr("transform", `translate(0, ${height})`)
     .call(
-      axisBottom(x)
+      axisBottom(xScale)
         .ticks(width / 80)
         .tickSizeOuter(0),
     )
-  container.append("g").call(axisLeft(y).ticks(height / 40))
+  container.append("g").call(axisLeft(yScale).ticks(height / 40))
 
   container
     .selectAll(".line")
@@ -45,8 +45,8 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     .attr(
       "d",
       line<number>()
-        .x((_d, index) => x(addDays(startDate, index)))
-        .y(y),
+        .x((_d, index) => xScale(addDays(startDate, index)))
+        .y(yScale),
     )
 
   output.replaceChildren(svg.node()!)

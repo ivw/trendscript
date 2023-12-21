@@ -1,8 +1,8 @@
-import "./style.css"
+import { startOfDay } from "date-fns"
 import "./chart"
 import { render } from "./chart"
 import { Rule, State, getGraphData } from "./evaluate"
-import { startOfDay } from "date-fns"
+import "./style.css"
 
 const codeInput: HTMLTextAreaElement = document.getElementById("code-input") as HTMLTextAreaElement
 
