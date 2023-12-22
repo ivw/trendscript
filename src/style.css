@@ -36,5 +36,5 @@ textarea#code-input {
 }
 
 #output {
-  overflow-x: scroll;
+  overflow-x: auto;
 }

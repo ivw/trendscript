@@ -10,10 +10,8 @@ export function evaluateRulesForDateRange(
   nrDays: number,
   mutateState: MutateState,
 ): State {
-  startDate = startOfDay(startDate)
   let state: State = Object.assign({}, initialState)
-  for (let i = 0; i < nrDays; i++) {
-    const date = addDays(startDate, i)
+  for (let i = 0, date = startOfDay(startDate); i < nrDays; i++, date = addDays(date, 1)) {
     mutateState(date, state)
   }
   return state
@@ -44,7 +42,6 @@ export function getGraphData(
   }))
   evaluateRulesForDateRange(initialState, startDate, nrDays, (date, state) => {
     mutateState(date, state)
-
     stateKeys.forEach((stateKey, stateKeyIndex) => {
       const value = state[stateKey]
       dataPerStateKey[stateKeyIndex].valuePerDay.push(value)

@@ -13,7 +13,7 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     width = output.clientWidth - margin.left - margin.right,
     height = 200 - margin.top - margin.bottom
 
-  const xScale = scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
+  const xScale = scaleTime([startDate, addDays(startDate, nrDays - 1)], [0, width])
   const yScale = scaleLinear(graphData.range, [height, 0])
 
   const svg = create("svg")
