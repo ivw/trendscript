@@ -1,8 +1,9 @@
 import { startOfDay } from "date-fns"
 import "./chart"
 import { render } from "./chart"
-import { MutateState, State, getGraphData } from "./evaluate"
+import { GraphData, MutateState, State, getGraphData } from "./evaluate"
 import "./style.css"
+import debounce from "lodash/debounce"
 
 const codeInput: HTMLTextAreaElement = document.getElementById("code-input") as HTMLTextAreaElement
 
@@ -17,7 +18,12 @@ at endOfMonth, bank += salary
 at everyBirthday, bank += 100
 `
 
-function update() {
+const startDate = startOfDay(new Date())
+const nrDays = 365 * 2
+
+let graphData: GraphData | null = null
+
+function updateGraphData() {
   // TODO parse code input, verify and convert to state and rules.
   const initialState: State = {
     foo: 100,
@@ -30,19 +36,19 @@ function update() {
       state.foo += 50
     }
   }
-  // Feb 02 2000
-  const startDate = startOfDay(new Date())
-  const nrDays = 365
 
-  const graphData = getGraphData(
-    initialState,
-    startDate,
-    nrDays,
-    mutateState,
-    Object.keys(initialState),
-  )
+  graphData = getGraphData(initialState, startDate, nrDays, mutateState, Object.keys(initialState))
   render(graphData, startDate, nrDays)
 }
 
-update()
-// TODO update whenever the input changes (with small debounce).
+updateGraphData()
+// TODO updateGraphData whenever the input changes (with small debounce).
+
+window.addEventListener(
+  "resize",
+  debounce(() => {
+    if (graphData) {
+      render(graphData, startDate, nrDays)
+    }
+  }, 50),
+)

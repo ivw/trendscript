@@ -34,3 +34,7 @@ textarea#code-input {
   color: rgba(255, 255, 255, 0.87);
   border: none;
 }
+
+#output {
+  overflow-x: scroll;
+}

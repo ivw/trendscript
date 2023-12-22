@@ -9,8 +9,8 @@ import { GraphData } from "./evaluate"
 const output = document.getElementById("output")!
 
 export function render(graphData: GraphData, startDate: Date, nrDays: number) {
-  const margin = { top: 10, right: 30, bottom: 30, left: 60 },
-    width = 1000 - margin.left - margin.right, // TODO dynamic width
+  const margin = { top: 10, right: 20, bottom: 30, left: 60 },
+    width = output.clientWidth - margin.left - margin.right,
     height = 200 - margin.top - margin.bottom
 
   const xScale = scaleTime([startDate, addDays(startDate, nrDays)], [0, width])
@@ -27,7 +27,7 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     .attr("transform", `translate(0, ${height})`)
     .call(
       axisBottom(xScale)
-        .ticks(width / 80)
+        .ticks(width / 100)
         .tickSizeOuter(0),
     )
   container.append("g").call(axisLeft(yScale).ticks(height / 40))
