@@ -2,7 +2,7 @@ import { addDays, startOfDay } from "date-fns"
 
 export type State = { [key: string]: number }
 
-export type MutateState = (date: Date, state: State) => void
+export type MutateState = (state: State, date: Date, day: number) => void
 
 export function evaluateRulesForDateRange(
   initialState: State,
@@ -11,8 +11,8 @@ export function evaluateRulesForDateRange(
   mutateState: MutateState,
 ): State {
   let state: State = Object.assign({}, initialState)
-  for (let i = 0, date = startOfDay(startDate); i < nrDays; i++, date = addDays(date, 1)) {
-    mutateState(date, state)
+  for (let day = 0, date = startOfDay(startDate); day < nrDays; day++, date = addDays(date, 1)) {
+    mutateState(state, date, day)
   }
   return state
 }
@@ -40,8 +40,8 @@ export function getGraphData(
     stateKey,
     valuePerDay: [],
   }))
-  evaluateRulesForDateRange(initialState, startDate, nrDays, (date, state) => {
-    mutateState(date, state)
+  evaluateRulesForDateRange(initialState, startDate, nrDays, (state, date, day) => {
+    mutateState(state, date, day)
     stateKeys.forEach((stateKey, stateKeyIndex) => {
       const value = state[stateKey]
       dataPerStateKey[stateKeyIndex].valuePerDay.push(value)

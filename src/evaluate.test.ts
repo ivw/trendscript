@@ -5,7 +5,7 @@ const initialState: State = {
   foo: 100,
 }
 
-const mutateState: MutateState = (date, state) => {
+const mutateState: MutateState = (state, date) => {
   state.foo += 1
   if (date.getDate() % 2 == 0) {
     state.foo += 10
@@ -24,7 +24,6 @@ test("evaluateRulesForDateRange", () => {
 })
 
 test("getGraphData", () => {
-  // TODO should it not include the initial state?
   const expected: GraphData = {
     dataPerStateKey: [
       {

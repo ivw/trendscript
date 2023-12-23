@@ -4,19 +4,10 @@ import { render } from "./chart"
 import { GraphData, MutateState, State, getGraphData } from "./evaluate"
 import "./style.css"
 import debounce from "lodash/debounce"
+import { defaultInput } from "./defaultInput"
 
-const codeInput: HTMLTextAreaElement = document.getElementById("code-input") as HTMLTextAreaElement
-
-codeInput.value = `var bank = 10000
-var salary = 1234
-
-date endOfYear = */-1/-1
-date endOfMonth = */*/-1
-date everyBirthday = */1/2
-
-at endOfMonth, bank += salary
-at everyBirthday, bank += 100
-`
+const codeInput = document.getElementById("code-input") as HTMLTextAreaElement
+codeInput.value = defaultInput
 
 const startDate = startOfDay(new Date())
 const nrDays = 365 * 2
@@ -29,7 +20,7 @@ function updateGraphData() {
     foo: 100,
     bar: 10,
   }
-  const mutateState: MutateState = (date, state) => {
+  const mutateState: MutateState = (state, date) => {
     state.foo += 1
     state.bar += 2
     if (date.getDate() == 1) {
