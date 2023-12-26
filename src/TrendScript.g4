@@ -7,7 +7,7 @@ declarationList: NL* (declaration (NL+ declaration)* NL*)?;
 declaration
   : 'var' Name '=' numberExpression # VarDeclaration
   | 'date' Name '=' datePattern # DateDeclaration
-  | 'at' (datePattern | Name) ',' action # RuleDeclaration
+  | 'at' datePatternExpression ',' action # RuleDeclaration
   ;
 
 action
@@ -22,7 +22,7 @@ numberExpression
   // TODO add operators like `+`
   ;
 
-// TODO dateExpression
+datePatternExpression: datePattern | Name;
 
 datePattern: datePatternPart '/' datePatternPart '/' datePatternPart;
 datePatternPart: ('-'? DecimalLiteral) | '*';

@@ -3,6 +3,7 @@ import { TrendScriptLexer } from "../generated/TrendScriptLexer.js"
 import {
   ActionContext,
   DateDeclarationContext,
+  DatePatternExpressionContext,
   DatePatternContext,
   DatePatternPartContext,
   DeclarationContext,
@@ -48,17 +49,12 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   } else if (ctx instanceof DateDeclarationContext) {
     result.dates[ctx.Name().getText()] = parseDatePattern(ctx.datePattern())
   } else if (ctx instanceof RuleDeclarationContext) {
-    let datePattern: DatePattern
+    const datePatternExpression = parseDatePatternExpression(ctx.datePatternExpression())
     const action = parseAction(ctx.action())
+    let datePattern: DatePattern
     result.rules.push((state, date) => {
       if (!datePattern) {
-        const datePatternCtx = ctx.datePattern()
-        if (datePatternCtx) {
-          datePattern = parseDatePattern(datePatternCtx)
-        } else {
-          const name: string = ctx.Name()!.getText()
-          datePattern = result.dates[name]
-        }
+        datePattern = datePatternExpression(result.dates)
       }
       if (datePattern(date)) {
         action(state)
@@ -108,6 +104,19 @@ function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => 
     return (state) => state[name]
   } else {
     throw new Error()
+  }
+}
+
+function parseDatePatternExpression(
+  ctx: DatePatternExpressionContext,
+): (dates: Record<string, DatePattern>) => DatePattern {
+  const datePatternCtx = ctx.datePattern()
+  if (datePatternCtx) {
+    const datePattern = parseDatePattern(datePatternCtx)
+    return () => datePattern
+  } else {
+    const name: string = ctx.Name()!.getText()
+    return (dates) => dates[name]
   }
 }
 
