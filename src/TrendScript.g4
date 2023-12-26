@@ -19,8 +19,10 @@ actionOperator: '=' | '+=' | '-=' | '*=' | '/=';
 numberExpression
   : '-'? DecimalLiteral # LiteralNumberExpression
   | Name # ReferenceNumberExpression
-  // TODO add operators like `+`
+  | numberExpression numberOperator numberExpression # OperatorNumberExpression
   ;
+
+numberOperator: '+' | '-' | '*' | '/';
 
 datePatternExpression: datePattern | Name;
 

@@ -13,6 +13,7 @@ import {
   RuleDeclarationContext,
   TrendScriptParser,
   VarDeclarationContext,
+  OperatorNumberExpressionContext,
 } from "../generated/TrendScriptParser.js"
 import { MutateState, State } from "./evaluate.js"
 import { DatePattern, createDatePattern } from "./dateUtils.js"
@@ -102,6 +103,31 @@ function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => 
   } else if (ctx instanceof ReferenceNumberExpressionContext) {
     const name = ctx.Name().getText()
     return (state) => state[name]
+  } else if (ctx instanceof OperatorNumberExpressionContext) {
+    const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
+    const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
+    const operator = ctx.numberOperator().getText()
+    return (state) => {
+      const a = aExpression(state)
+      const b = bExpression(state)
+      switch (operator) {
+        case "+": {
+          return a + b
+        }
+        case "-": {
+          return a - b
+        }
+        case "*": {
+          return a * b
+        }
+        case "/": {
+          return a / b
+        }
+        default: {
+          throw new Error()
+        }
+      }
+    }
   } else {
     throw new Error()
   }
