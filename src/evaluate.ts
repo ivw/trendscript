@@ -1,6 +1,6 @@
 import { addDays, startOfDay } from "date-fns"
 
-export type State = { [key: string]: number }
+export type State = Record<string, number>
 
 export type MutateState = (state: State, date: Date, day: number) => void
 

@@ -5,6 +5,7 @@ import { GraphData, MutateState, State, getGraphData } from "./evaluate"
 import "./style.css"
 import debounce from "lodash/debounce"
 import { defaultInput } from "./defaultInput"
+import { parse } from "./parse"
 
 const codeInput = document.getElementById("code-input") as HTMLTextAreaElement
 codeInput.value = defaultInput
@@ -15,6 +16,8 @@ const nrDays = 365 * 2
 let graphData: GraphData | null = null
 
 function updateGraphData() {
+  console.log(parse(codeInput.value))
+
   // TODO parse code input, verify and convert to state and rules.
   const initialState: State = {
     foo: 100,
