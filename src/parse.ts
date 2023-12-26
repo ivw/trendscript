@@ -6,7 +6,9 @@ import {
   DatePatternContext,
   DatePatternPartContext,
   DeclarationContext,
-  NumberContext,
+  LiteralNumberExpressionContext,
+  NumberExpressionContext,
+  ReferenceNumberExpressionContext,
   RuleDeclarationContext,
   TrendScriptParser,
   VarDeclarationContext,
@@ -41,7 +43,8 @@ export function parse(input: string): ParseResult {
 
 function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   if (ctx instanceof VarDeclarationContext) {
-    result.initialState[ctx.Name().getText()] = parseNumber(ctx.number())
+    const numberExpression = parseNumberExpression(ctx.numberExpression())
+    result.initialState[ctx.Name().getText()] = numberExpression(result.initialState)
   } else if (ctx instanceof DateDeclarationContext) {
     result.dates[ctx.Name().getText()] = parseDatePattern(ctx.datePattern())
   } else if (ctx instanceof RuleDeclarationContext) {
@@ -65,15 +68,47 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
 }
 
 function parseAction(ctx: ActionContext): (state: State) => void {
-  const name = ctx.Name(0)!.getText()
-  const operator = ctx.ActionOperator().getText()
+  const name = ctx.Name()!.getText()
+  const operator = ctx.actionOperator().getText()
+  const numberExpression = parseNumberExpression(ctx.numberExpression())
 
-  // TODO
-  return () => {}
+  return (state) => {
+    const number = numberExpression(state)
+    switch (operator) {
+      case "=": {
+        state[name] = number
+        break
+      }
+      case "+=": {
+        state[name] += number
+        break
+      }
+      case "-=": {
+        state[name] -= number
+        break
+      }
+      case "*=": {
+        state[name] *= number
+        break
+      }
+      case "/=": {
+        state[name] /= number
+        break
+      }
+    }
+  }
 }
 
-function parseNumber(ctx: NumberContext) {
-  return Number.parseFloat(ctx.getText())
+function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => number {
+  if (ctx instanceof LiteralNumberExpressionContext) {
+    const number = Number.parseFloat(ctx.getText())
+    return () => number
+  } else if (ctx instanceof ReferenceNumberExpressionContext) {
+    const name = ctx.Name().getText()
+    return (state) => state[name]
+  } else {
+    throw new Error()
+  }
 }
 
 function parseDatePattern(ctx: DatePatternContext): DatePattern {
@@ -84,7 +119,6 @@ function parseDatePattern(ctx: DatePatternContext): DatePattern {
 }
 
 function parseDatePatternPart(ctx: DatePatternPartContext): number | null {
-  const numberCtx = ctx.number()
-  if (!numberCtx) return null
-  return parseNumber(numberCtx)
+  if (!ctx.DecimalLiteral()) return null
+  return Number.parseFloat(ctx.getText())
 }

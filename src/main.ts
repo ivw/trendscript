@@ -16,27 +16,24 @@ const nrDays = 365 * 2
 let graphData: GraphData | null = null
 
 function updateGraphData() {
-  console.log(parse(codeInput.value))
+  const parseResult = parse(codeInput.value)
 
-  // TODO parse code input, verify and convert to state and rules.
-  const initialState: State = {
-    foo: 100,
-    bar: 10,
-  }
-  const mutateState: MutateState = (state, date) => {
-    state.foo += 1
-    state.bar += 2
-    if (date.getDate() == 1) {
-      state.foo += 50
-    }
+  const mutateState: MutateState = (state, date, day) => {
+    parseResult.rules.forEach((rule) => rule(state, date, day))
   }
 
-  graphData = getGraphData(initialState, startDate, nrDays, mutateState, Object.keys(initialState))
+  graphData = getGraphData(
+    parseResult.initialState,
+    startDate,
+    nrDays,
+    mutateState,
+    Object.keys(parseResult.initialState),
+  )
   render(graphData, startDate, nrDays)
 }
 
 updateGraphData()
-// TODO updateGraphData whenever the input changes (with small debounce).
+codeInput.addEventListener("input", debounce(updateGraphData, 200))
 
 window.addEventListener(
   "resize",

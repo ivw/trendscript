@@ -5,23 +5,29 @@ program: declarationList EOF;
 declarationList: NL* (declaration (NL+ declaration)* NL*)?;
 
 declaration
-  : 'var' Name '=' number # VarDeclaration
+  : 'var' Name '=' numberExpression # VarDeclaration
   | 'date' Name '=' datePattern # DateDeclaration
   | 'at' (datePattern | Name) ',' action # RuleDeclaration
   ;
 
 action
-  : Name ActionOperator (number | Name)
+  : Name actionOperator numberExpression
   ;
 
-number: '-'? DecimalLiteral;
+actionOperator: '=' | '+=' | '-=' | '*=' | '/=';
+
+numberExpression
+  : '-'? DecimalLiteral # LiteralNumberExpression
+  | Name # ReferenceNumberExpression
+  // TODO add operators like `+`
+  ;
+
+// TODO dateExpression
 
 datePattern: datePatternPart '/' datePatternPart '/' datePatternPart;
-datePatternPart: number | '*';
+datePatternPart: ('-'? DecimalLiteral) | '*';
 
 // LEXER TOKENS
-
-ActionOperator: '+=' | '-=' | '*=' | '/=';
 
 DecimalLiteral
   : DecimalIntegerLiteral '.' DecimalIntegerLiteral ExponentPart?
