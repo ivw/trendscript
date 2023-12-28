@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,14 +7,17 @@
     <title>TrendScript</title>
   </head>
   <body>
-    <textarea
-      id="code-input"
-      autofocus
-      placeholder="Type your code here, or try one of the examples"
-      autocapitalize="off"
-      autocomplete="off"
-      spellcheck="false"
-    ></textarea>
+    <div id="code-container">
+      <textarea
+        id="code-input"
+        autofocus
+        placeholder="Type your code here, or try one of the examples"
+        autocapitalize="off"
+        autocomplete="off"
+        spellcheck="false"
+      ></textarea>
+      <div id="code-messages"></div>
+    </div>
     <div id="output"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>

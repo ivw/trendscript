@@ -6,6 +6,7 @@ import "./style.css"
 import debounce from "lodash/debounce"
 import { defaultInput } from "./defaultInput"
 import { parse } from "./parse"
+import { displayMessages } from "./codeMessages"
 
 const codeInput = document.getElementById("code-input") as HTMLTextAreaElement
 codeInput.value = defaultInput
@@ -17,6 +18,10 @@ let graphData: GraphData | null = null
 
 function updateGraphData() {
   const parseResult = parse(codeInput.value)
+  displayMessages(parseResult.log)
+  if (parseResult.log.length > 0) {
+    return
+  }
 
   const mutateState: MutateState = (state, date, day) => {
     parseResult.rules.forEach((rule) => rule(state, date, day))

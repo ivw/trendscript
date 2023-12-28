@@ -11,6 +11,14 @@
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+
+  box-sizing: border-box;
+}
+
+*,
+*:before,
+*:after {
+  box-sizing: inherit;
 }
 
 body {
@@ -21,20 +29,41 @@ body {
   align-items: stretch;
 }
 
+#code-container {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+}
+
 textarea#code-input {
   flex-grow: 1;
+  overflow: auto;
   resize: none;
   font-family: Consolas, "Courier New", monospace;
   font-size: 16px;
   line-height: 1.2;
   margin: 0;
   padding: 2px 5px;
-  overflow: auto;
   background-color: #242424;
   color: rgba(255, 255, 255, 0.87);
   border: none;
 }
 
+#code-messages {
+  max-width: 50%;
+  overflow-y: auto;
+}
+
+#code-messages .code-msg {
+  padding: 2px 8px;
+  margin: 4px;
+  background-color: #444;
+  color: #f44;
+}
+
 #output {
+  flex-shrink: 0;
   overflow-x: auto;
 }

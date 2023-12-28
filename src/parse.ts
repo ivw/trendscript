@@ -1,4 +1,4 @@
-import { CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
+import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer.js"
 import {
   ActionContext,
@@ -22,24 +22,57 @@ export type ParseResult = {
   initialState: State
   dates: Record<string, DatePattern>
   rules: Array<MutateState>
+  log: Log
 }
+
+export type Msg = {
+  line: number
+  charPositionInLine: number
+  msg: string
+}
+
+export type Log = Array<Msg>
 
 export function parse(input: string): ParseResult {
   const inputStream = CharStreams.fromString(input)
+
+  const log: Log = []
+  const errorHandler: ANTLRErrorListener = {
+    syntaxError: (_recognizer, _offendingSymbol, line, charPositionInLine, msg) => {
+      log.push({ line, charPositionInLine: charPositionInLine + 1, msg })
+    },
+    reportAmbiguity: () => {
+      console.error("Ambiguity")
+    },
+    reportAttemptingFullContext: () => {
+      console.error("AttemptingFullContext")
+    },
+    reportContextSensitivity: () => {
+      console.error("ContextSensitivity")
+    },
+  }
+
   const lexer = new TrendScriptLexer(inputStream)
+  lexer.removeErrorListeners()
+  lexer.addErrorListener(errorHandler)
   const tokenStream = new CommonTokenStream(lexer)
   const parser = new TrendScriptParser(tokenStream)
+  parser.removeErrorListeners()
+  parser.addErrorListener(errorHandler)
   const tree = parser.program()
 
   const result: ParseResult = {
     initialState: {},
     dates: {},
     rules: [],
+    log,
   }
-  tree
-    .declarationList()
-    .declaration()
-    .forEach((it) => parseDeclaration(it, result))
+  if (log.length === 0) {
+    tree
+      .declarationList()
+      .declaration()
+      .forEach((it) => parseDeclaration(it, result))
+  }
   return result
 }
 
