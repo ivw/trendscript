@@ -16,7 +16,7 @@ import {
   OperatorNumberExpressionContext,
 } from "../generated/TrendScriptParser.js"
 import { MutateState, State } from "./evaluate.js"
-import { DatePattern, createDatePattern } from "./dateUtils.js"
+import { DatePattern, createDatePattern } from "./utils/dateUtils.js"
 
 export type ParseResult = {
   initialState: State

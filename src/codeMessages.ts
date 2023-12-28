@@ -1,5 +1,5 @@
 import { Log } from "./parse"
-import { getIndexOfLine } from "./stringUtils"
+import { getIndexOfLine } from "./utils/stringUtils"
 
 const codeInput = document.getElementById("code-input") as HTMLTextAreaElement
 
