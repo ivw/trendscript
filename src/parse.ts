@@ -41,14 +41,14 @@ export function parse(input: string): ParseResult {
     syntaxError: (_recognizer, _offendingSymbol, line, charPositionInLine, msg) => {
       log.push({ line, charPositionInLine: charPositionInLine + 1, msg })
     },
-    reportAmbiguity: () => {
-      console.error("Ambiguity")
+    reportAmbiguity: (_recognizer, _dfa, startIndex, stopIndex) => {
+      console.error("Ambiguity", startIndex, stopIndex)
     },
-    reportAttemptingFullContext: () => {
-      console.error("AttemptingFullContext")
+    reportAttemptingFullContext: (_recognizer, _dfa, startIndex, stopIndex) => {
+      console.error("AttemptingFullContext", startIndex, stopIndex)
     },
-    reportContextSensitivity: () => {
-      console.error("ContextSensitivity")
+    reportContextSensitivity: (_recognizer, _dfa, startIndex, stopIndex) => {
+      console.error("ContextSensitivity", startIndex, stopIndex)
     },
   }
 

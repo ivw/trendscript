@@ -20,6 +20,7 @@ numberExpression
   : '-'? DecimalLiteral # LiteralNumberExpression
   | Name # ReferenceNumberExpression
   | numberExpression numberOperator numberExpression # OperatorNumberExpression
+  // TODO if-else expr
   ;
 
 numberOperator: '+' | '-' | '*' | '/';
