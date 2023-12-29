@@ -2,6 +2,8 @@ import { getDaysInMonth } from "date-fns"
 
 export type DatePattern = (date: Date) => boolean
 
+export const emptyDatePattern: DatePattern = () => false
+
 /**
  *
  * @param year

@@ -19,7 +19,7 @@ import {
   BooleanExpressionContext,
 } from "../generated/TrendScriptParser.js"
 import { MutateState, State } from "./evaluate.js"
-import { DatePattern, createDatePattern } from "./utils/dateUtils.js"
+import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils.js"
 
 export type ParseResult = {
   initialState: State
@@ -35,6 +35,10 @@ export type Msg = {
 }
 
 export type Log = Array<Msg>
+
+function msgFromNode(node: TerminalNode, msg: string): Msg {
+  return { line: node.symbol.line, charPositionInLine: node.symbol.column + 1, msg }
+}
 
 export function parse(input: string): ParseResult {
   const inputStream = CharStreams.fromString(input)
@@ -81,13 +85,21 @@ export function parse(input: string): ParseResult {
 
 function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   if (ctx instanceof VarDeclarationContext) {
-    const numberExpression = parseNumberExpression(ctx.numberExpression())
+    const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
+    const name = ctx.Name().getText()
+    if (name in result.initialState) {
+      result.log.push(msgFromNode(ctx.Name(), "name already exists"))
+    }
     result.initialState[ctx.Name().getText()] = numberExpression(result.initialState)
   } else if (ctx instanceof DateDeclarationContext) {
-    result.dates[ctx.Name().getText()] = parseDatePattern(ctx.datePattern())
+    const name = ctx.Name().getText()
+    if (name in result.dates) {
+      result.log.push(msgFromNode(ctx.Name(), "name already exists"))
+    }
+    result.dates[name] = parseDatePattern(ctx.datePattern())
   } else if (ctx instanceof RuleDeclarationContext) {
-    const datePatternExpression = parseDatePatternExpression(ctx.datePatternExpression())
-    const action = parseAction(ctx.action())
+    const datePatternExpression = parseDatePatternExpression(ctx.datePatternExpression(), result)
+    const action = parseAction(ctx.action(), result)
     let datePattern: DatePattern
     result.rules.push((state, date) => {
       if (!datePattern) {
@@ -100,20 +112,27 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   }
 }
 
-function parseAction(ctx: ActionContext): (state: State) => void {
+function parseAction(ctx: ActionContext, result: ParseResult): (state: State) => void {
   if (ctx instanceof OperatorActionContext) {
-    return parseOperatorAction(ctx)
+    return parseOperatorAction(ctx, result)
   } else if (ctx instanceof ConditionalActionContext) {
-    return parseConditionalAction(ctx)
+    return parseConditionalAction(ctx, result)
   } else {
     throw new Error()
   }
 }
 
-function parseOperatorAction(ctx: OperatorActionContext): (state: State) => void {
-  const name = ctx.Name()!.getText()
+function parseOperatorAction(
+  ctx: OperatorActionContext,
+  result: ParseResult,
+): (state: State) => void {
+  const name = ctx.Name().getText()
+  if (!(name in result.initialState)) {
+    result.log.push(msgFromNode(ctx.Name(), "name not found"))
+    return () => {}
+  }
   const operator = ctx.actionOperator().getText()
-  const numberExpression = parseNumberExpression(ctx.numberExpression())
+  const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
 
   return (state) => {
     const number = numberExpression(state)
@@ -141,10 +160,13 @@ function parseOperatorAction(ctx: OperatorActionContext): (state: State) => void
     }
   }
 }
-function parseConditionalAction(ctx: ConditionalActionContext): (state: State) => void {
-  const booleanExpression = parseBooleanExpression(ctx.booleanExpression())
-  const ifAction = parseAction(ctx._ifAction!)
-  const elseAction = ctx._elseAction ? parseAction(ctx._elseAction) : null
+function parseConditionalAction(
+  ctx: ConditionalActionContext,
+  result: ParseResult,
+): (state: State) => void {
+  const booleanExpression = parseBooleanExpression(ctx.booleanExpression(), result)
+  const ifAction = parseAction(ctx._ifAction!, result)
+  const elseAction = ctx._elseAction ? parseAction(ctx._elseAction, result) : null
   return (state) => {
     const b = booleanExpression(state)
     if (b) {
@@ -155,15 +177,22 @@ function parseConditionalAction(ctx: ConditionalActionContext): (state: State) =
   }
 }
 
-function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => number {
+function parseNumberExpression(
+  ctx: NumberExpressionContext,
+  result: ParseResult,
+): (state: State) => number {
   if (ctx instanceof LiteralNumberExpressionContext) {
     const number = Number.parseFloat(ctx.getText())
     return () => number
   } else if (ctx instanceof ReferenceNumberExpressionContext) {
     const name = ctx.Name().getText()
+    if (!(name in result.initialState)) {
+      result.log.push(msgFromNode(ctx.Name(), "name not found"))
+      return () => NaN
+    }
     return (state) => state[name]
   } else if (ctx instanceof OperatorNumberExpressionContext) {
-    return parseOperatorNumberExpression(ctx)
+    return parseOperatorNumberExpression(ctx, result)
   } else {
     throw new Error()
   }
@@ -171,9 +200,10 @@ function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => 
 
 function parseOperatorNumberExpression(
   ctx: OperatorNumberExpressionContext,
+  result: ParseResult,
 ): (state: State) => number {
-  const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
-  const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
   const operator = ctx.numberOperator().getText()
   return (state) => {
     const a = aExpression(state)
@@ -200,6 +230,7 @@ function parseOperatorNumberExpression(
 
 function parseDatePatternExpression(
   ctx: DatePatternExpressionContext,
+  result: ParseResult,
 ): (dates: Record<string, DatePattern>) => DatePattern {
   const datePatternCtx = ctx.datePattern()
   if (datePatternCtx) {
@@ -207,6 +238,10 @@ function parseDatePatternExpression(
     return () => datePattern
   } else {
     const name: string = ctx.Name()!.getText()
+    if (!(name in result.dates)) {
+      result.log.push(msgFromNode(ctx.Name()!, "name not found"))
+      return () => emptyDatePattern
+    }
     return (dates) => dates[name]
   }
 }
@@ -223,9 +258,12 @@ function parseDatePatternPart(ctx: DatePatternPartContext): number | null {
   return Number.parseFloat(ctx.getText())
 }
 
-function parseBooleanExpression(ctx: BooleanExpressionContext): (state: State) => boolean {
-  const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
-  const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
+function parseBooleanExpression(
+  ctx: BooleanExpressionContext,
+  result: ParseResult,
+): (state: State) => boolean {
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
   const operator = ctx.comparisonOperator().getText()
   return (state) => {
     const a = aExpression(state)
