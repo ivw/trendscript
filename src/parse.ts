@@ -1,7 +1,9 @@
 import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
+  ActionBlockContext,
   ActionContext,
+  BlockActionContext,
   BooleanExpressionContext,
   ConditionalActionContext,
   DateDeclarationContext,
@@ -58,6 +60,8 @@ function msgFromNode(node: TerminalNode, msg: string): Msg {
 }
 
 type Action = (state: State) => void
+
+const emptyAction: Action = () => {}
 
 type NumberExpression = (state: State) => number
 
@@ -142,6 +146,8 @@ function parseAction(ctx: ActionContext, result: ParseResult): Action {
     return parseOperatorAction(ctx, result)
   } else if (ctx instanceof ConditionalActionContext) {
     return parseConditionalAction(ctx, result)
+  } else if (ctx instanceof BlockActionContext) {
+    return parseActionBlock(ctx.actionBlock(), result)
   } else {
     throw new Error()
   }
@@ -151,7 +157,7 @@ function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): A
   const name = ctx.Name().getText()
   if (!(name in result.initialState)) {
     result.log.push(msgFromNode(ctx.Name(), "name not found"))
-    return () => {}
+    return emptyAction
   }
   const operator = ctx.actionOperator().getText()
   const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
@@ -184,8 +190,8 @@ function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): A
 }
 function parseConditionalAction(ctx: ConditionalActionContext, result: ParseResult): Action {
   const booleanExpression = parseBooleanExpression(ctx.booleanExpression(), result)
-  const ifAction = parseAction(ctx._ifAction!, result)
-  const elseAction = ctx._elseAction ? parseAction(ctx._elseAction, result) : null
+  const ifAction = parseActionBlock(ctx._ifBlock!, result)
+  const elseAction = ctx._elseBlock ? parseActionBlock(ctx._elseBlock, result) : null
   return (state) => {
     const b = booleanExpression(state)
     if (b) {
@@ -193,6 +199,19 @@ function parseConditionalAction(ctx: ConditionalActionContext, result: ParseResu
     } else if (elseAction) {
       elseAction(state)
     }
+  }
+}
+
+function parseActionBlock(ctx: ActionBlockContext, result: ParseResult): Action {
+  const actions = ctx.action().map((it) => parseAction(it, result))
+  if (actions.length === 0) {
+    return emptyAction
+  }
+  if (actions.length === 1) {
+    return actions[0]
+  }
+  return (state) => {
+    actions.forEach((action) => action(state))
   }
 }
 

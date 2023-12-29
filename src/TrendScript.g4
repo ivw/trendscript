@@ -12,10 +12,12 @@ declaration
 
 action
   : Name actionOperator numberExpression # OperatorAction
-  | 'if' '(' booleanExpression ')' '{' ifAction=action '}'
-    ('else' '{' elseAction=action '}')? # ConditionalAction
-  // TODO block {}
+  | 'if' '(' booleanExpression ')' ifBlock=actionBlock
+    ('else' elseBlock=actionBlock)? # ConditionalAction
+  | actionBlock # BlockAction
   ;
+
+actionBlock: '{' NL* (action ((';' | NL+) action)* NL*)? '}';
 
 actionOperator: '=' | '+=' | '-=' | '*=' | '/=';
 
