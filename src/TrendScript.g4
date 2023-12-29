@@ -11,7 +11,9 @@ declaration
   ;
 
 action
-  : Name actionOperator numberExpression
+  : Name actionOperator numberExpression # OperatorAction
+  | 'if' '(' booleanExpression ')' '{' ifAction=action '}'
+    ('else' '{' elseAction=action '}')? # ConditionalAction
   ;
 
 actionOperator: '=' | '+=' | '-=' | '*=' | '/=';
@@ -20,7 +22,6 @@ numberExpression
   : '-'? DecimalLiteral # LiteralNumberExpression
   | Name # ReferenceNumberExpression
   | numberExpression numberOperator numberExpression # OperatorNumberExpression
-  // TODO if-else expr
   ;
 
 numberOperator: '+' | '-' | '*' | '/';
@@ -29,6 +30,10 @@ datePatternExpression: datePattern | Name;
 
 datePattern: datePatternPart '/' datePatternPart '/' datePatternPart;
 datePatternPart: ('-'? DecimalLiteral) | '*';
+
+booleanExpression: numberExpression comparisonOperator numberExpression;
+
+comparisonOperator: '==' | '>' | '<' | '>=' | '<=';
 
 // LEXER TOKENS
 

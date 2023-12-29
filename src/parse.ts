@@ -14,6 +14,9 @@ import {
   TrendScriptParser,
   VarDeclarationContext,
   OperatorNumberExpressionContext,
+  OperatorActionContext,
+  ConditionalActionContext,
+  BooleanExpressionContext,
 } from "../generated/TrendScriptParser.js"
 import { MutateState, State } from "./evaluate.js"
 import { DatePattern, createDatePattern } from "./utils/dateUtils.js"
@@ -98,6 +101,16 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
 }
 
 function parseAction(ctx: ActionContext): (state: State) => void {
+  if (ctx instanceof OperatorActionContext) {
+    return parseOperatorAction(ctx)
+  } else if (ctx instanceof ConditionalActionContext) {
+    return parseConditionalAction(ctx)
+  } else {
+    throw new Error()
+  }
+}
+
+function parseOperatorAction(ctx: OperatorActionContext): (state: State) => void {
   const name = ctx.Name()!.getText()
   const operator = ctx.actionOperator().getText()
   const numberExpression = parseNumberExpression(ctx.numberExpression())
@@ -128,6 +141,19 @@ function parseAction(ctx: ActionContext): (state: State) => void {
     }
   }
 }
+function parseConditionalAction(ctx: ConditionalActionContext): (state: State) => void {
+  const booleanExpression = parseBooleanExpression(ctx.booleanExpression())
+  const ifAction = parseAction(ctx._ifAction!)
+  const elseAction = ctx._elseAction ? parseAction(ctx._elseAction) : null
+  return (state) => {
+    const b = booleanExpression(state)
+    if (b) {
+      ifAction(state)
+    } else if (elseAction) {
+      elseAction(state)
+    }
+  }
+}
 
 function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => number {
   if (ctx instanceof LiteralNumberExpressionContext) {
@@ -137,32 +163,38 @@ function parseNumberExpression(ctx: NumberExpressionContext): (state: State) => 
     const name = ctx.Name().getText()
     return (state) => state[name]
   } else if (ctx instanceof OperatorNumberExpressionContext) {
-    const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
-    const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
-    const operator = ctx.numberOperator().getText()
-    return (state) => {
-      const a = aExpression(state)
-      const b = bExpression(state)
-      switch (operator) {
-        case "+": {
-          return a + b
-        }
-        case "-": {
-          return a - b
-        }
-        case "*": {
-          return a * b
-        }
-        case "/": {
-          return a / b
-        }
-        default: {
-          throw new Error()
-        }
-      }
-    }
+    return parseOperatorNumberExpression(ctx)
   } else {
     throw new Error()
+  }
+}
+
+function parseOperatorNumberExpression(
+  ctx: OperatorNumberExpressionContext,
+): (state: State) => number {
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
+  const operator = ctx.numberOperator().getText()
+  return (state) => {
+    const a = aExpression(state)
+    const b = bExpression(state)
+    switch (operator) {
+      case "+": {
+        return a + b
+      }
+      case "-": {
+        return a - b
+      }
+      case "*": {
+        return a * b
+      }
+      case "/": {
+        return a / b
+      }
+      default: {
+        throw new Error()
+      }
+    }
   }
 }
 
@@ -189,4 +221,34 @@ function parseDatePattern(ctx: DatePatternContext): DatePattern {
 function parseDatePatternPart(ctx: DatePatternPartContext): number | null {
   if (!ctx.DecimalLiteral()) return null
   return Number.parseFloat(ctx.getText())
+}
+
+function parseBooleanExpression(ctx: BooleanExpressionContext): (state: State) => boolean {
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!)
+  const operator = ctx.comparisonOperator().getText()
+  return (state) => {
+    const a = aExpression(state)
+    const b = bExpression(state)
+    switch (operator) {
+      case "==": {
+        return a == b
+      }
+      case ">": {
+        return a > b
+      }
+      case "<": {
+        return a < b
+      }
+      case ">=": {
+        return a >= b
+      }
+      case "<=": {
+        return a <= b
+      }
+      default: {
+        throw new Error()
+      }
+    }
+  }
 }

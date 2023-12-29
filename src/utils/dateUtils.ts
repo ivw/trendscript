@@ -18,11 +18,15 @@ export function createDatePattern(
     if (year !== null) {
       if (year >= 0) {
         if (date.getFullYear() !== year) return false
+      } else {
+        return false
       }
     }
     if (month !== null) {
       if (month >= 0) {
         if (date.getMonth() + 1 !== month) return false
+      } else {
+        return false
       }
     }
     if (day !== null) {

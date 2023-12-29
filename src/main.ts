@@ -1,7 +1,7 @@
 import { startOfDay } from "date-fns"
 import "./chart"
 import { render } from "./chart"
-import { GraphData, MutateState, State, getGraphData } from "./evaluate"
+import { GraphData, MutateState, getGraphData } from "./evaluate"
 import "./style.css"
 import debounce from "lodash/debounce"
 import { defaultInput } from "./defaultInput"

@@ -66,4 +66,5 @@ textarea#code-input {
 #output {
   flex-shrink: 0;
   overflow-x: auto;
+  border-top: 1px solid gray;
 }
