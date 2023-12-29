@@ -1,12 +1,12 @@
 import { startOfDay } from "date-fns"
+import debounce from "lodash/debounce"
 import "./chart"
 import { render } from "./chart"
-import { GraphData, MutateState, getGraphData } from "./evaluate"
-import "./style.css"
-import debounce from "lodash/debounce"
-import { defaultInput } from "./defaultInput"
-import { parse } from "./parse"
 import { displayMessages } from "./codeMessages"
+import { defaultInput } from "./defaultInput"
+import { GraphData } from "./evaluate"
+import { getGraphDataFromParseResult, parse } from "./parse"
+import "./style.css"
 
 const codeInput = document.getElementById("code-input") as HTMLTextAreaElement
 codeInput.value = defaultInput
@@ -23,17 +23,7 @@ function updateGraphData() {
     return
   }
 
-  const mutateState: MutateState = (state, date, day) => {
-    parseResult.rules.forEach((rule) => rule(state, date, day))
-  }
-
-  graphData = getGraphData(
-    parseResult.initialState,
-    startDate,
-    nrDays,
-    mutateState,
-    Object.keys(parseResult.initialState),
-  )
+  graphData = getGraphDataFromParseResult(parseResult, startDate, nrDays)
   render(graphData, startDate, nrDays)
 }
 

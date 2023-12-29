@@ -1,31 +1,48 @@
 import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
-import { TrendScriptLexer } from "../generated/TrendScriptLexer.js"
+import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
   ActionContext,
+  BooleanExpressionContext,
+  ConditionalActionContext,
   DateDeclarationContext,
-  DatePatternExpressionContext,
   DatePatternContext,
+  DatePatternExpressionContext,
   DatePatternPartContext,
   DeclarationContext,
   LiteralNumberExpressionContext,
   NumberExpressionContext,
+  OperatorActionContext,
+  OperatorNumberExpressionContext,
   ReferenceNumberExpressionContext,
   RuleDeclarationContext,
   TrendScriptParser,
   VarDeclarationContext,
-  OperatorNumberExpressionContext,
-  OperatorActionContext,
-  ConditionalActionContext,
-  BooleanExpressionContext,
-} from "../generated/TrendScriptParser.js"
-import { MutateState, State } from "./evaluate.js"
-import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils.js"
+} from "../generated/TrendScriptParser"
+import { GraphData, MutateState, State, getGraphData } from "./evaluate"
+import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils"
 
 export type ParseResult = {
   initialState: State
   dates: Record<string, DatePattern>
   rules: Array<MutateState>
   log: Log
+}
+
+export function getGraphDataFromParseResult(
+  parseResult: ParseResult,
+  startDate: Date,
+  nrDays: number,
+): GraphData {
+  const mutateState: MutateState = (state, date, day) => {
+    parseResult.rules.forEach((rule) => rule(state, date, day))
+  }
+  return getGraphData(
+    parseResult.initialState,
+    startDate,
+    nrDays,
+    mutateState,
+    Object.keys(parseResult.initialState),
+  )
 }
 
 export type Msg = {
@@ -39,6 +56,14 @@ export type Log = Array<Msg>
 function msgFromNode(node: TerminalNode, msg: string): Msg {
   return { line: node.symbol.line, charPositionInLine: node.symbol.column + 1, msg }
 }
+
+type Action = (state: State) => void
+
+type NumberExpression = (state: State) => number
+
+type DatePatternExpression = (dates: Record<string, DatePattern>) => DatePattern
+
+type BooleanExpression = (state: State) => boolean
 
 export function parse(input: string): ParseResult {
   const inputStream = CharStreams.fromString(input)
@@ -112,7 +137,7 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   }
 }
 
-function parseAction(ctx: ActionContext, result: ParseResult): (state: State) => void {
+function parseAction(ctx: ActionContext, result: ParseResult): Action {
   if (ctx instanceof OperatorActionContext) {
     return parseOperatorAction(ctx, result)
   } else if (ctx instanceof ConditionalActionContext) {
@@ -122,10 +147,7 @@ function parseAction(ctx: ActionContext, result: ParseResult): (state: State) =>
   }
 }
 
-function parseOperatorAction(
-  ctx: OperatorActionContext,
-  result: ParseResult,
-): (state: State) => void {
+function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): Action {
   const name = ctx.Name().getText()
   if (!(name in result.initialState)) {
     result.log.push(msgFromNode(ctx.Name(), "name not found"))
@@ -160,10 +182,7 @@ function parseOperatorAction(
     }
   }
 }
-function parseConditionalAction(
-  ctx: ConditionalActionContext,
-  result: ParseResult,
-): (state: State) => void {
+function parseConditionalAction(ctx: ConditionalActionContext, result: ParseResult): Action {
   const booleanExpression = parseBooleanExpression(ctx.booleanExpression(), result)
   const ifAction = parseAction(ctx._ifAction!, result)
   const elseAction = ctx._elseAction ? parseAction(ctx._elseAction, result) : null
@@ -180,7 +199,7 @@ function parseConditionalAction(
 function parseNumberExpression(
   ctx: NumberExpressionContext,
   result: ParseResult,
-): (state: State) => number {
+): NumberExpression {
   if (ctx instanceof LiteralNumberExpressionContext) {
     const number = Number.parseFloat(ctx.getText())
     return () => number
@@ -201,7 +220,7 @@ function parseNumberExpression(
 function parseOperatorNumberExpression(
   ctx: OperatorNumberExpressionContext,
   result: ParseResult,
-): (state: State) => number {
+): NumberExpression {
   const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
   const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
   const operator = ctx.numberOperator().getText()
@@ -231,7 +250,7 @@ function parseOperatorNumberExpression(
 function parseDatePatternExpression(
   ctx: DatePatternExpressionContext,
   result: ParseResult,
-): (dates: Record<string, DatePattern>) => DatePattern {
+): DatePatternExpression {
   const datePatternCtx = ctx.datePattern()
   if (datePatternCtx) {
     const datePattern = parseDatePattern(datePatternCtx)
@@ -261,7 +280,7 @@ function parseDatePatternPart(ctx: DatePatternPartContext): number | null {
 function parseBooleanExpression(
   ctx: BooleanExpressionContext,
   result: ParseResult,
-): (state: State) => boolean {
+): BooleanExpression {
   const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
   const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
   const operator = ctx.comparisonOperator().getText()
