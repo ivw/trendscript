@@ -24,14 +24,13 @@ test("evaluateRulesForDateRange", () => {
 })
 
 test("getGraphData", () => {
+  const stateKeysProps = [{ key: "foo", label: "foo", color: "red" }]
   const expected: GraphData = {
-    dataPerStateKey: [
-      {
-        stateKey: "foo",
-        valuePerDay: [111, 112, 123, 124, 135],
-      },
-    ],
+    data: [[111, 112, 123, 124, 135]],
+    stateKeysProps,
     range: [0, 135],
   }
-  expect(getGraphData(initialState, startDate, nrDays, mutateState, ["foo"])).toEqual(expected)
+  expect(getGraphData(initialState, startDate, nrDays, mutateState, stateKeysProps)).toEqual(
+    expected,
+  )
 })

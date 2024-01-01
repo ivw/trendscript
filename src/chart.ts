@@ -1,15 +1,14 @@
 import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
-import { interpolateTurbo } from "d3-scale-chromatic"
 import { create } from "d3-selection"
 import { line } from "d3-shape"
 import { addDays } from "date-fns"
-import { GraphData } from "./evaluate"
+import { GraphData, StateKeyProps } from "./evaluate"
 
 const output = document.getElementById("output")!
 
 export function render(graphData: GraphData, startDate: Date, nrDays: number) {
-  const margin = { top: 10, right: 20, bottom: 30, left: 60 },
+  const margin = { top: 20, right: 80, bottom: 30, left: 60 },
     width = output.clientWidth - margin.left - margin.right,
     height = 200 - margin.top - margin.bottom
 
@@ -35,12 +34,10 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
   container
     .selectAll(".line")
     .append("path")
-    .data(graphData.dataPerStateKey.map((it) => it.valuePerDay))
+    .data(graphData.data)
     .join("path")
     .attr("fill", "none")
-    .attr("stroke", (_, stateKeyIndex) =>
-      interpolateTurbo((stateKeyIndex + 1) / (graphData.dataPerStateKey.length + 1)),
-    )
+    .attr("stroke", (_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].color)
     .attr("stroke-width", 1.5)
     .attr(
       "d",
@@ -48,6 +45,17 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
         .x((_d, index) => xScale(addDays(startDate, index)))
         .y(yScale),
     )
+
+  container
+    .selectAll("text.label")
+    .data(graphData.data)
+    .join("text")
+    .attr("class", "label")
+    .attr("x", width + 5)
+    .attr("y", (d) => yScale(d[d.length - 1]) + 4)
+    .style("fill", (_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].color)
+    .style("font-size", 8)
+    .text((_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].label)
 
   output.replaceChildren(svg.node()!)
 }

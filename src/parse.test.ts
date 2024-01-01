@@ -20,12 +20,8 @@ describe("parse", () => {
     const parseResult = parse(code)
     const graphData = getGraphDataFromParseResult(parseResult, startDate, nrDays)
     const expected: GraphData = {
-      dataPerStateKey: [
-        {
-          stateKey: "a",
-          valuePerDay: [2, 3, 4],
-        },
-      ],
+      data: [[2, 3, 4]],
+      stateKeysProps: [{ key: "a", label: "a", color: "rgb(149, 251, 81)" }],
       range: [0, 4],
     }
     expect(graphData).toEqual(expected)

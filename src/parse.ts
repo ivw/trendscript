@@ -1,4 +1,5 @@
 import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
+import { interpolateTurbo } from "d3-scale-chromatic"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
   ActionBlockContext,
@@ -38,12 +39,17 @@ export function getGraphDataFromParseResult(
   const mutateState: MutateState = (state, date, day) => {
     parseResult.rules.forEach((rule) => rule(state, date, day))
   }
+  const keys = Object.keys(parseResult.initialState)
   return getGraphData(
     parseResult.initialState,
     startDate,
     nrDays,
     mutateState,
-    Object.keys(parseResult.initialState),
+    keys.map((key, index) => ({
+      key,
+      label: key,
+      color: interpolateTurbo((index + 1) / (keys.length + 1)),
+    })),
   )
 }
 
