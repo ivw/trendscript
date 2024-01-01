@@ -1,19 +1,31 @@
 import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
+import { interpolateTurbo } from "d3-scale-chromatic"
 import { create } from "d3-selection"
 import { line } from "d3-shape"
 import { addDays } from "date-fns"
-import { GraphData, StateKeyProps } from "./evaluate"
+import last from "lodash/last"
+import { GraphData } from "./evaluate"
 
 const output = document.getElementById("output")!
 
-export function render(graphData: GraphData, startDate: Date, nrDays: number) {
+export function render(
+  graphData: GraphData,
+  startDate: Date,
+  nrDays: number,
+  heightPx: number = 200,
+) {
   const margin = { top: 20, right: 80, bottom: 30, left: 60 },
     width = output.clientWidth - margin.left - margin.right,
-    height = 200 - margin.top - margin.bottom
+    height = heightPx - margin.top - margin.bottom
 
   const xScale = scaleTime([startDate, addDays(startDate, nrDays - 1)], [0, width])
   const yScale = scaleLinear(graphData.range, [height, 0])
+
+  const colors = graphData.stateKeysProps.map(
+    (stateKeyProps, index) =>
+      stateKeyProps.color || interpolateTurbo((index + 1) / (graphData.stateKeysProps.length + 1)),
+  )
 
   const svg = create("svg")
     .attr("width", width + margin.left + margin.right)
@@ -37,7 +49,7 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
     .data(graphData.data)
     .join("path")
     .attr("fill", "none")
-    .attr("stroke", (_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].color)
+    .attr("stroke", (_, index) => colors[index])
     .attr("stroke-width", 1.5)
     .attr(
       "d",
@@ -48,14 +60,14 @@ export function render(graphData: GraphData, startDate: Date, nrDays: number) {
 
   container
     .selectAll("text.label")
-    .data(graphData.data)
+    .data(graphData.stateKeysProps)
     .join("text")
     .attr("class", "label")
     .attr("x", width + 5)
-    .attr("y", (d) => yScale(d[d.length - 1]) + 4)
-    .style("fill", (_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].color)
+    .attr("y", (_, index) => yScale(last(graphData.data[index]) || 0) + 4)
+    .style("fill", (_, index) => colors[index])
     .style("font-size", 8)
-    .text((_, stateKeyIndex) => graphData.stateKeysProps[stateKeyIndex].label)
+    .text((props) => props.label || props.key)
 
   output.replaceChildren(svg.node()!)
 }

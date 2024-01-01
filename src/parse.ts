@@ -1,5 +1,4 @@
 import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
-import { interpolateTurbo } from "d3-scale-chromatic"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
   ActionBlockContext,
@@ -21,10 +20,11 @@ import {
   TrendScriptParser,
   VarDeclarationContext,
 } from "../generated/TrendScriptParser"
-import { GraphData, MutateState, State, getGraphData } from "./evaluate"
+import { GraphData, MutateState, State, StateKeyProps, getGraphData } from "./evaluate"
 import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils"
 
 export type ParseResult = {
+  stateKeysProps: Array<StateKeyProps>
   initialState: State
   dates: Record<string, DatePattern>
   rules: Array<MutateState>
@@ -39,17 +39,12 @@ export function getGraphDataFromParseResult(
   const mutateState: MutateState = (state, date, day) => {
     parseResult.rules.forEach((rule) => rule(state, date, day))
   }
-  const keys = Object.keys(parseResult.initialState)
   return getGraphData(
     parseResult.initialState,
     startDate,
     nrDays,
     mutateState,
-    keys.map((key, index) => ({
-      key,
-      label: key,
-      color: interpolateTurbo((index + 1) / (keys.length + 1)),
-    })),
+    parseResult.stateKeysProps,
   )
 }
 
@@ -104,6 +99,7 @@ export function parse(input: string): ParseResult {
   const tree = parser.program()
 
   const result: ParseResult = {
+    stateKeysProps: [],
     initialState: {},
     dates: {},
     rules: [],
@@ -125,7 +121,10 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
     if (name in result.initialState) {
       result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` already exists`))
     }
-    result.initialState[ctx.Name().getText()] = numberExpression(result.initialState)
+    result.initialState[name] = numberExpression(result.initialState)
+    if (!ctx.HiddenModifier()) {
+      result.stateKeysProps.push({ key: name })
+    }
   } else if (ctx instanceof DateDeclarationContext) {
     const name = ctx.Name().getText()
     if (name in result.dates) {

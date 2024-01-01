@@ -25,8 +25,8 @@ export type GraphData = {
 
 export type StateKeyProps = {
   key: string
-  label: string
-  color: string
+  label?: string
+  color?: string
 }
 
 export function getGraphData(

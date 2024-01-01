@@ -5,7 +5,7 @@ program: declarationList EOF;
 declarationList: NL* (declaration (NL+ declaration)* NL*)?;
 
 declaration
-  : 'var' Name '=' numberExpression # VarDeclaration
+  : HiddenModifier? 'var' Name '=' numberExpression # VarDeclaration
   | 'date' Name '=' datePattern # DateDeclaration
   | 'at' datePatternExpression ',' action # RuleDeclaration
   ;
@@ -39,6 +39,8 @@ booleanExpression: numberExpression comparisonOperator numberExpression;
 comparisonOperator: '==' | '>' | '<' | '>=' | '<=';
 
 // LEXER TOKENS
+
+HiddenModifier: 'hidden';
 
 DecimalLiteral
   : DecimalIntegerLiteral '.' DecimalIntegerLiteral ExponentPart?
