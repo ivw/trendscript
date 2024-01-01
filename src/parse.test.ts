@@ -54,7 +54,7 @@ describe("parse", () => {
       {
         line: 3,
         charPositionInLine: 11,
-        msg: "name already exists",
+        msg: "var `a` already exists",
       },
     ]
     expect(parseResult.log).toEqual(expected)

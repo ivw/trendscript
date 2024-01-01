@@ -117,13 +117,13 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
     const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
     const name = ctx.Name().getText()
     if (name in result.initialState) {
-      result.log.push(msgFromNode(ctx.Name(), "name already exists"))
+      result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` already exists`))
     }
     result.initialState[ctx.Name().getText()] = numberExpression(result.initialState)
   } else if (ctx instanceof DateDeclarationContext) {
     const name = ctx.Name().getText()
     if (name in result.dates) {
-      result.log.push(msgFromNode(ctx.Name(), "name already exists"))
+      result.log.push(msgFromNode(ctx.Name(), `date \`${name}\` already exists`))
     }
     result.dates[name] = parseDatePattern(ctx.datePattern())
   } else if (ctx instanceof RuleDeclarationContext) {
@@ -156,7 +156,7 @@ function parseAction(ctx: ActionContext, result: ParseResult): Action {
 function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): Action {
   const name = ctx.Name().getText()
   if (!(name in result.initialState)) {
-    result.log.push(msgFromNode(ctx.Name(), "name not found"))
+    result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
     return emptyAction
   }
   const operator = ctx.actionOperator().getText()
@@ -225,7 +225,7 @@ function parseNumberExpression(
   } else if (ctx instanceof ReferenceNumberExpressionContext) {
     const name = ctx.Name().getText()
     if (!(name in result.initialState)) {
-      result.log.push(msgFromNode(ctx.Name(), "name not found"))
+      result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
       return () => NaN
     }
     return (state) => state[name]
@@ -277,7 +277,7 @@ function parseDatePatternExpression(
   } else {
     const name: string = ctx.Name()!.getText()
     if (!(name in result.dates)) {
-      result.log.push(msgFromNode(ctx.Name()!, "name not found"))
+      result.log.push(msgFromNode(ctx.Name()!, `date \`${name}\` not found`))
       return () => emptyDatePattern
     }
     return (dates) => dates[name]
