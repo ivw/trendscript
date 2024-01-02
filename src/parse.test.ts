@@ -1,30 +1,31 @@
 import { describe, expect, test } from "vitest"
 import { GraphData } from "./evaluate"
-import { Log, getGraphDataFromParseResult, parse } from "./parse"
-
-// Feb 02 2000
-const startDate = new Date(2000, 1, 2)
-
-const nrDays = 3
+import { Log, parse } from "./parse"
 
 describe("parse", () => {
   test("success", () => {
     const code = `
-      var a = 1
+      var a = 1 { label: "A", color: "red" }
 
       date b = */*/*
 
       at b, a += 1
+
+      options { startDate: "02/02/2000", duration: "3d" }
     `
 
     const parseResult = parse(code)
-    const graphData = getGraphDataFromParseResult(parseResult, startDate, nrDays)
     const expected: GraphData = {
       data: [[2, 3, 4]],
-      stateKeysProps: [{ key: "a", label: "a", color: "rgb(149, 251, 81)" }],
       range: [0, 4],
+      options: {
+        startDate: new Date(2000, 1, 2),
+        nrDays: 3,
+        heightPx: 200,
+        stateKeysProps: [{ key: "a", label: "A", color: "red" }],
+      },
     }
-    expect(graphData).toEqual(expected)
+    expect(parseResult.graphData).toEqual(expected)
   })
 
   test("parse error", () => {
@@ -34,7 +35,7 @@ describe("parse", () => {
       {
         line: 1,
         charPositionInLine: 1,
-        msg: "extraneous input 'abc' expecting <EOF>",
+        msg: "extraneous input 'abc' expecting {<EOF>, 'options'}",
       },
     ]
     expect(parseResult.log).toEqual(expected)

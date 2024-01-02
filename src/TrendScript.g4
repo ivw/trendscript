@@ -1,11 +1,11 @@
 grammar TrendScript;
 
-program: declarationList EOF;
+program: declarationList ('options' optionsBlock NL*)? EOF;
 
 declarationList: NL* (declaration (NL+ declaration)* NL*)?;
 
 declaration
-  : HiddenModifier? 'var' Name '=' numberExpression # VarDeclaration
+  : 'var' Name '=' numberExpression optionsBlock? # VarDeclaration
   | 'date' Name '=' datePattern # DateDeclaration
   | 'at' datePatternExpression ',' action # RuleDeclaration
   ;
@@ -38,9 +38,11 @@ booleanExpression: numberExpression comparisonOperator numberExpression;
 
 comparisonOperator: '==' | '>' | '<' | '>=' | '<=';
 
-// LEXER TOKENS
+optionsBlock: '{' NL* (option ((',' | NL+) option)* NL*)? '}';
 
-HiddenModifier: 'hidden';
+option: Name ':' (StringLiteral | numberExpression);
+
+// LEXER TOKENS
 
 DecimalLiteral
   : DecimalIntegerLiteral '.' DecimalIntegerLiteral ExponentPart?
@@ -51,6 +53,10 @@ DecimalLiteral
 fragment DecimalIntegerLiteral: [0-9]+;
 
 fragment ExponentPart: [eE] [+-]? [0-9]+;
+
+StringLiteral: '"' StringCharacter* '"';
+
+fragment StringCharacter: ~["\\];
 
 Name: [a-zA-Z0-9]+;
 

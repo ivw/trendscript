@@ -1,4 +1,5 @@
 import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
+import { startOfDay } from "date-fns"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
   ActionBlockContext,
@@ -15,15 +16,23 @@ import {
   NumberExpressionContext,
   OperatorActionContext,
   OperatorNumberExpressionContext,
+  OptionsBlockContext,
   ReferenceNumberExpressionContext,
   RuleDeclarationContext,
   TrendScriptParser,
   VarDeclarationContext,
 } from "../generated/TrendScriptParser"
-import { GraphData, MutateState, State, StateKeyProps, getGraphData } from "./evaluate"
+import {
+  GraphData,
+  GraphOptions,
+  MutateState,
+  State,
+  StateKeyProps,
+  getGraphData,
+} from "./evaluate"
 import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils"
 
-export type ParseResult = {
+export type ParseContext = {
   stateKeysProps: Array<StateKeyProps>
   initialState: State
   dates: Record<string, DatePattern>
@@ -31,30 +40,13 @@ export type ParseResult = {
   log: Log
 }
 
-export function getGraphDataFromParseResult(
-  parseResult: ParseResult,
-  startDate: Date,
-  nrDays: number,
-): GraphData {
-  const mutateState: MutateState = (state, date, day) => {
-    parseResult.rules.forEach((rule) => rule(state, date, day))
-  }
-  return getGraphData(
-    parseResult.initialState,
-    startDate,
-    nrDays,
-    mutateState,
-    parseResult.stateKeysProps,
-  )
-}
+export type Log = Array<Msg>
 
 export type Msg = {
   line: number
   charPositionInLine: number
   msg: string
 }
-
-export type Log = Array<Msg>
 
 function msgFromNode(node: TerminalNode, msg: string): Msg {
   return { line: node.symbol.line, charPositionInLine: node.symbol.column + 1, msg }
@@ -70,7 +62,15 @@ type DatePatternExpression = (dates: Record<string, DatePattern>) => DatePattern
 
 type BooleanExpression = (state: State) => boolean
 
-export function parse(input: string): ParseResult {
+type RawOptions = Record<string, RawOption>
+
+type RawOption = { value: string | number; node: TerminalNode }
+
+const defaultDuration = 365 * 5
+
+const defaultHeightPx = 200
+
+export function parse(input: string): { log: Log; graphData: GraphData | null } {
   const inputStream = CharStreams.fromString(input)
 
   const log: Log = []
@@ -92,52 +92,75 @@ export function parse(input: string): ParseResult {
   const lexer = new TrendScriptLexer(inputStream)
   lexer.removeErrorListeners()
   lexer.addErrorListener(errorHandler)
-  const tokenStream = new CommonTokenStream(lexer)
-  const parser = new TrendScriptParser(tokenStream)
+  const parser = new TrendScriptParser(new CommonTokenStream(lexer))
   parser.removeErrorListeners()
   parser.addErrorListener(errorHandler)
   const tree = parser.program()
+  if (log.length > 0) {
+    return { log, graphData: null }
+  }
 
-  const result: ParseResult = {
+  const context: ParseContext = {
     stateKeysProps: [],
     initialState: {},
     dates: {},
     rules: [],
     log,
   }
-  if (log.length === 0) {
-    tree
-      .declarationList()
-      .declaration()
-      .forEach((it) => parseDeclaration(it, result))
+  tree
+    .declarationList()
+    .declaration()
+    .forEach((it) => parseDeclaration(it, context))
+
+  const optionsBlockCtx = tree.optionsBlock()
+  const rawOptions = optionsBlockCtx ? parseOptionsBlock(optionsBlockCtx, context) : {}
+  const graphOptions: GraphOptions = {
+    startDate: rawOptions.startDate ? new Date(rawOptions.startDate.value) : startOfDay(new Date()),
+    nrDays: rawOptions.duration ? parseDuration(rawOptions.duration, log) : defaultDuration,
+    heightPx: rawOptions.height ? Number(rawOptions.height.value) : defaultHeightPx,
+    stateKeysProps: context.stateKeysProps,
   }
-  return result
+  if (log.length > 0) {
+    return { log, graphData: null }
+  }
+  const mutateState: MutateState = (state, date, day) => {
+    context.rules.forEach((rule) => rule(state, date, day))
+  }
+  const graphData = getGraphData(context.initialState, mutateState, graphOptions)
+  return { log, graphData }
 }
 
-function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
+function parseDeclaration(ctx: DeclarationContext, context: ParseContext) {
   if (ctx instanceof VarDeclarationContext) {
-    const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
+    const numberExpression = parseNumberExpression(ctx.numberExpression(), context)
     const name = ctx.Name().getText()
-    if (name in result.initialState) {
-      result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` already exists`))
-    }
-    result.initialState[name] = numberExpression(result.initialState)
-    if (!ctx.HiddenModifier()) {
-      result.stateKeysProps.push({ key: name })
+    const optionsBlockCtx = ctx.optionsBlock()
+    const options = optionsBlockCtx ? parseOptionsBlock(optionsBlockCtx, context) : {}
+    if (name in context.initialState) {
+      context.log.push(msgFromNode(ctx.Name(), `var \`${name}\` already exists`))
+    } else {
+      context.initialState[name] = numberExpression(context.initialState)
+      if (options.color?.value !== "hidden") {
+        context.stateKeysProps.push({
+          key: name,
+          label: options.label ? String(options.label.value) : undefined,
+          color: options.color ? String(options.color.value) : undefined,
+        })
+      }
     }
   } else if (ctx instanceof DateDeclarationContext) {
     const name = ctx.Name().getText()
-    if (name in result.dates) {
-      result.log.push(msgFromNode(ctx.Name(), `date \`${name}\` already exists`))
+    if (name in context.dates) {
+      context.log.push(msgFromNode(ctx.Name(), `date \`${name}\` already exists`))
     }
-    result.dates[name] = parseDatePattern(ctx.datePattern())
+    context.dates[name] = parseDatePattern(ctx.datePattern())
   } else if (ctx instanceof RuleDeclarationContext) {
-    const datePatternExpression = parseDatePatternExpression(ctx.datePatternExpression(), result)
-    const action = parseAction(ctx.action(), result)
+    const datePatternExpression = parseDatePatternExpression(ctx.datePatternExpression(), context)
+    const action = parseAction(ctx.action(), context)
     let datePattern: DatePattern
-    result.rules.push((state, date) => {
+    context.rules.push((state, date) => {
       if (!datePattern) {
-        datePattern = datePatternExpression(result.dates)
+        datePattern = datePatternExpression(context.dates)
       }
       if (datePattern(date)) {
         action(state)
@@ -146,26 +169,26 @@ function parseDeclaration(ctx: DeclarationContext, result: ParseResult) {
   }
 }
 
-function parseAction(ctx: ActionContext, result: ParseResult): Action {
+function parseAction(ctx: ActionContext, context: ParseContext): Action {
   if (ctx instanceof OperatorActionContext) {
-    return parseOperatorAction(ctx, result)
+    return parseOperatorAction(ctx, context)
   } else if (ctx instanceof ConditionalActionContext) {
-    return parseConditionalAction(ctx, result)
+    return parseConditionalAction(ctx, context)
   } else if (ctx instanceof BlockActionContext) {
-    return parseActionBlock(ctx.actionBlock(), result)
+    return parseActionBlock(ctx.actionBlock(), context)
   } else {
     throw new Error()
   }
 }
 
-function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): Action {
+function parseOperatorAction(ctx: OperatorActionContext, context: ParseContext): Action {
   const name = ctx.Name().getText()
-  if (!(name in result.initialState)) {
-    result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
+  if (!(name in context.initialState)) {
+    context.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
     return emptyAction
   }
   const operator = ctx.actionOperator().getText()
-  const numberExpression = parseNumberExpression(ctx.numberExpression(), result)
+  const numberExpression = parseNumberExpression(ctx.numberExpression(), context)
 
   return (state) => {
     const number = numberExpression(state)
@@ -193,10 +216,10 @@ function parseOperatorAction(ctx: OperatorActionContext, result: ParseResult): A
     }
   }
 }
-function parseConditionalAction(ctx: ConditionalActionContext, result: ParseResult): Action {
-  const booleanExpression = parseBooleanExpression(ctx.booleanExpression(), result)
-  const ifAction = parseActionBlock(ctx._ifBlock!, result)
-  const elseAction = ctx._elseBlock ? parseActionBlock(ctx._elseBlock, result) : null
+function parseConditionalAction(ctx: ConditionalActionContext, context: ParseContext): Action {
+  const booleanExpression = parseBooleanExpression(ctx.booleanExpression(), context)
+  const ifAction = parseActionBlock(ctx._ifBlock!, context)
+  const elseAction = ctx._elseBlock ? parseActionBlock(ctx._elseBlock, context) : null
   return (state) => {
     const b = booleanExpression(state)
     if (b) {
@@ -207,8 +230,8 @@ function parseConditionalAction(ctx: ConditionalActionContext, result: ParseResu
   }
 }
 
-function parseActionBlock(ctx: ActionBlockContext, result: ParseResult): Action {
-  const actions = ctx.action().map((it) => parseAction(it, result))
+function parseActionBlock(ctx: ActionBlockContext, context: ParseContext): Action {
+  const actions = ctx.action().map((it) => parseAction(it, context))
   if (actions.length === 0) {
     return emptyAction
   }
@@ -222,20 +245,20 @@ function parseActionBlock(ctx: ActionBlockContext, result: ParseResult): Action 
 
 function parseNumberExpression(
   ctx: NumberExpressionContext,
-  result: ParseResult,
+  context: ParseContext,
 ): NumberExpression {
   if (ctx instanceof LiteralNumberExpressionContext) {
     const number = Number.parseFloat(ctx.getText())
     return () => number
   } else if (ctx instanceof ReferenceNumberExpressionContext) {
     const name = ctx.Name().getText()
-    if (!(name in result.initialState)) {
-      result.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
+    if (!(name in context.initialState)) {
+      context.log.push(msgFromNode(ctx.Name(), `var \`${name}\` not found`))
       return () => NaN
     }
     return (state) => state[name]
   } else if (ctx instanceof OperatorNumberExpressionContext) {
-    return parseOperatorNumberExpression(ctx, result)
+    return parseOperatorNumberExpression(ctx, context)
   } else {
     throw new Error()
   }
@@ -243,10 +266,10 @@ function parseNumberExpression(
 
 function parseOperatorNumberExpression(
   ctx: OperatorNumberExpressionContext,
-  result: ParseResult,
+  context: ParseContext,
 ): NumberExpression {
-  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
-  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, context)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, context)
   const operator = ctx.numberOperator().getText()
   return (state) => {
     const a = aExpression(state)
@@ -273,7 +296,7 @@ function parseOperatorNumberExpression(
 
 function parseDatePatternExpression(
   ctx: DatePatternExpressionContext,
-  result: ParseResult,
+  context: ParseContext,
 ): DatePatternExpression {
   const datePatternCtx = ctx.datePattern()
   if (datePatternCtx) {
@@ -281,8 +304,8 @@ function parseDatePatternExpression(
     return () => datePattern
   } else {
     const name: string = ctx.Name()!.getText()
-    if (!(name in result.dates)) {
-      result.log.push(msgFromNode(ctx.Name()!, `date \`${name}\` not found`))
+    if (!(name in context.dates)) {
+      context.log.push(msgFromNode(ctx.Name()!, `date \`${name}\` not found`))
       return () => emptyDatePattern
     }
     return (dates) => dates[name]
@@ -303,10 +326,10 @@ function parseDatePatternPart(ctx: DatePatternPartContext): number | null {
 
 function parseBooleanExpression(
   ctx: BooleanExpressionContext,
-  result: ParseResult,
+  context: ParseContext,
 ): BooleanExpression {
-  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, result)
-  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, result)
+  const aExpression = parseNumberExpression(ctx.numberExpression(0)!, context)
+  const bExpression = parseNumberExpression(ctx.numberExpression(1)!, context)
   const operator = ctx.comparisonOperator().getText()
   return (state) => {
     const a = aExpression(state)
@@ -332,4 +355,45 @@ function parseBooleanExpression(
       }
     }
   }
+}
+
+function parseStringLiteral(node: TerminalNode): string {
+  return node.getText().slice(1, -1)
+}
+
+function parseOptionsBlock(ctx: OptionsBlockContext, context: ParseContext): RawOptions {
+  const options: RawOptions = {}
+  ctx.option().forEach((optionCtx) => {
+    const name = optionCtx.Name().getText()
+    const numberExpressionCtx = optionCtx.numberExpression()
+    options[name] = {
+      value: numberExpressionCtx
+        ? parseNumberExpression(numberExpressionCtx, context)(context.initialState)
+        : parseStringLiteral(optionCtx.StringLiteral()!),
+      node: optionCtx.Name(),
+    }
+  })
+  return options
+}
+
+function parseDuration(rawOption: RawOption, log: Log): number {
+  const durationString = String(rawOption.value)
+  const lastChar = durationString.slice(-1)
+  const otherChars = durationString.slice(0, -1)
+  const num = Number(otherChars)
+  if (num > 0) {
+    switch (lastChar) {
+      case "d":
+        return num
+      case "w":
+        return num * 7
+      case "m":
+        return num * 31
+      case "y":
+        return num * 365
+      default:
+    }
+  }
+  log.push(msgFromNode(rawOption.node, `duration should be formatted like \`123d\` (d/w/m/y)`))
+  return defaultDuration
 }

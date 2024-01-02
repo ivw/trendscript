@@ -19,8 +19,15 @@ export function evaluateRulesForDateRange(
 
 export type GraphData = {
   data: Array<Array<number>>
-  stateKeysProps: Array<StateKeyProps>
   range: [number, number]
+  options: GraphOptions
+}
+
+export type GraphOptions = {
+  startDate: Date
+  nrDays: number
+  heightPx: number
+  stateKeysProps: Array<StateKeyProps>
 }
 
 export type StateKeyProps = {
@@ -31,17 +38,15 @@ export type StateKeyProps = {
 
 export function getGraphData(
   initialState: State,
-  startDate: Date,
-  nrDays: number,
   mutateState: MutateState,
-  stateKeysProps: Array<StateKeyProps>,
+  options: GraphOptions,
 ): GraphData {
   let min = 0
   let max = 0
-  const data: Array<Array<number>> = stateKeysProps.map(() => [])
-  evaluateRulesForDateRange(initialState, startDate, nrDays, (state, date, day) => {
+  const data: Array<Array<number>> = options.stateKeysProps.map(() => [])
+  evaluateRulesForDateRange(initialState, options.startDate, options.nrDays, (state, date, day) => {
     mutateState(state, date, day)
-    stateKeysProps.forEach((stateKeyProps, stateKeyIndex) => {
+    options.stateKeysProps.forEach((stateKeyProps, stateKeyIndex) => {
       const value = state[stateKeyProps.key]
       data[stateKeyIndex].push(value)
       if (value > max) {
@@ -52,5 +57,5 @@ export function getGraphData(
       }
     })
   })
-  return { data, stateKeysProps, range: [min, max] }
+  return { data, range: [min, max], options }
 }

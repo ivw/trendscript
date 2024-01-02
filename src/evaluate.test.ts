@@ -1,5 +1,12 @@
 import { expect, test } from "vitest"
-import { GraphData, MutateState, State, evaluateRulesForDateRange, getGraphData } from "./evaluate"
+import {
+  GraphData,
+  GraphOptions,
+  MutateState,
+  State,
+  evaluateRulesForDateRange,
+  getGraphData,
+} from "./evaluate"
 
 const initialState: State = {
   foo: 100,
@@ -24,13 +31,17 @@ test("evaluateRulesForDateRange", () => {
 })
 
 test("getGraphData", () => {
-  const stateKeysProps = [{ key: "foo", label: "foo", color: "red" }]
+  const options: GraphOptions = {
+    startDate,
+    nrDays,
+    heightPx: 200,
+    stateKeysProps: [{ key: "foo", label: "foo", color: "red" }],
+  }
+
   const expected: GraphData = {
     data: [[111, 112, 123, 124, 135]],
-    stateKeysProps,
     range: [0, 135],
+    options,
   }
-  expect(getGraphData(initialState, startDate, nrDays, mutateState, stateKeysProps)).toEqual(
-    expected,
-  )
+  expect(getGraphData(initialState, mutateState, options)).toEqual(expected)
 })

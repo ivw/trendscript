@@ -9,12 +9,9 @@ import { GraphData } from "./evaluate"
 
 const output = document.getElementById("output")!
 
-export function render(
-  graphData: GraphData,
-  startDate: Date,
-  nrDays: number,
-  heightPx: number = 200,
-) {
+export function render(graphData: GraphData) {
+  const { startDate, nrDays, heightPx, stateKeysProps } = graphData.options
+
   const margin = { top: 20, right: 80, bottom: 30, left: 60 },
     width = output.clientWidth - margin.left - margin.right,
     height = heightPx - margin.top - margin.bottom
@@ -22,9 +19,9 @@ export function render(
   const xScale = scaleTime([startDate, addDays(startDate, nrDays - 1)], [0, width])
   const yScale = scaleLinear(graphData.range, [height, 0])
 
-  const colors = graphData.stateKeysProps.map(
+  const colors = stateKeysProps.map(
     (stateKeyProps, index) =>
-      stateKeyProps.color || interpolateTurbo((index + 1) / (graphData.stateKeysProps.length + 1)),
+      stateKeyProps.color ?? interpolateTurbo((index + 1) / (stateKeysProps.length + 1)),
   )
 
   const svg = create("svg")
@@ -60,14 +57,14 @@ export function render(
 
   container
     .selectAll("text.label")
-    .data(graphData.stateKeysProps)
+    .data(stateKeysProps)
     .join("text")
     .attr("class", "label")
     .attr("x", width + 5)
-    .attr("y", (_, index) => yScale(last(graphData.data[index]) || 0) + 4)
+    .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
     .style("fill", (_, index) => colors[index])
     .style("font-size", 8)
-    .text((props) => props.label || props.key)
+    .text((props) => props.label ?? props.key)
 
   output.replaceChildren(svg.node()!)
 }
