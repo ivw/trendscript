@@ -2,7 +2,7 @@ import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
 import { interpolateTurbo } from "d3-scale-chromatic"
 import { create } from "d3-selection"
-import { line } from "d3-shape"
+import { line, area } from "d3-shape"
 import { addDays } from "date-fns"
 import last from "lodash/last"
 import { GraphData } from "./evaluate"
@@ -10,7 +10,7 @@ import { GraphData } from "./evaluate"
 const output = document.getElementById("output")!
 
 export function render(graphData: GraphData) {
-  const { startDate, nrDays, heightPx, stateKeysProps } = graphData.options
+  const { startDate, nrDays, heightPx, stateKeysProps, graphType } = graphData.options
 
   const margin = { top: 20, right: 80, bottom: 30, left: 60 },
     width = output.clientWidth - margin.left - margin.right,
@@ -40,20 +40,37 @@ export function render(graphData: GraphData) {
     )
   container.append("g").call(axisLeft(yScale).ticks(height / 40))
 
-  container
-    .selectAll(".line")
-    .append("path")
-    .data(graphData.data)
-    .join("path")
-    .attr("fill", "none")
-    .attr("stroke", (_, index) => colors[index])
-    .attr("stroke-width", 1.5)
-    .attr(
-      "d",
-      line<number>()
-        .x((_d, index) => xScale(addDays(startDate, index)))
-        .y(yScale),
-    )
+  if (graphType === "line") {
+    container
+      .selectAll(".line")
+      .append("path")
+      .data(graphData.data)
+      .join("path")
+      .attr("fill", "none")
+      .attr("stroke", (_, index) => colors[index])
+      .attr("stroke-width", 1.5)
+      .attr(
+        "d",
+        line<number>()
+          .x((_d, index) => xScale(addDays(startDate, index)))
+          .y(yScale),
+      )
+  }
+  if (graphType === "area") {
+    container
+      .selectAll(".line")
+      .append("path")
+      .data(graphData.data)
+      .join("path")
+      .attr("fill", (_, index) => colors[index])
+      .attr(
+        "d",
+        area<number>()
+          .x((_d, index) => xScale(addDays(startDate, index)))
+          .y0(yScale(0))
+          .y1(yScale),
+      )
+  }
 
   container
     .selectAll("text.label")

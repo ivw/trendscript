@@ -28,6 +28,7 @@ export type GraphOptions = {
   nrDays: number
   heightPx: number
   stateKeysProps: Array<StateKeyProps>
+  graphType: "line" | "area"
 }
 
 export type StateKeyProps = {

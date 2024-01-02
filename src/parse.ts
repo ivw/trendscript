@@ -119,6 +119,7 @@ export function parse(input: string): { log: Log; graphData: GraphData | null } 
     nrDays: rawOptions.duration ? parseDuration(rawOptions.duration, log) : defaultDuration,
     heightPx: rawOptions.height ? Number(rawOptions.height.value) : defaultHeightPx,
     stateKeysProps: context.stateKeysProps,
+    graphType: rawOptions.graphType && rawOptions.graphType.value === "area" ? "area" : "line",
   }
   if (log.length > 0) {
     return { log, graphData: null }
