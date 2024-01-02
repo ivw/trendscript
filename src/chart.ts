@@ -10,7 +10,7 @@ import { GraphData } from "./evaluate"
 const output = document.getElementById("output")!
 
 export function render(graphData: GraphData) {
-  const { startDate, nrDays, heightPx, stateKeysProps, graphType } = graphData.options
+  const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth } = graphData.options
 
   const margin = { top: 20, right: 80, bottom: 30, left: 60 },
     width = output.clientWidth - margin.left - margin.right,
@@ -48,7 +48,7 @@ export function render(graphData: GraphData) {
       .join("path")
       .attr("fill", "none")
       .attr("stroke", (_, index) => colors[index])
-      .attr("stroke-width", 1.5)
+      .attr("stroke-width", strokeWidth)
       .attr(
         "d",
         line<number>()

@@ -70,6 +70,8 @@ const defaultDuration = 365 * 5
 
 const defaultHeightPx = 200
 
+const defaultStrokeWidth = 2
+
 export function parse(input: string): { log: Log; graphData: GraphData | null } {
   const inputStream = CharStreams.fromString(input)
 
@@ -120,6 +122,7 @@ export function parse(input: string): { log: Log; graphData: GraphData | null } 
     heightPx: rawOptions.height ? Number(rawOptions.height.value) : defaultHeightPx,
     stateKeysProps: context.stateKeysProps,
     graphType: rawOptions.graphType && rawOptions.graphType.value === "area" ? "area" : "line",
+    strokeWidth: rawOptions.strokeWidth ? Number(rawOptions.strokeWidth.value) : defaultStrokeWidth,
   }
   if (log.length > 0) {
     return { log, graphData: null }
