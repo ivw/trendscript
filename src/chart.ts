@@ -5,14 +5,36 @@ import { create } from "d3-selection"
 import { line, area } from "d3-shape"
 import { addDays } from "date-fns"
 import last from "lodash/last"
-import { GraphData } from "./evaluate"
+import { GraphData, StateKeyProps } from "./evaluate"
 
 const output = document.getElementById("output")!
 
-export function render(graphData: GraphData) {
-  const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth } = graphData.options
+const averageCharWidth = 10 // An estimate.
 
-  const margin = { top: 20, right: 80, bottom: 30, left: 60 },
+function getMarginRight(isLineLegend: boolean, stateKeysProps: Array<StateKeyProps>) {
+  if (isLineLegend) {
+    const maxLabelLength: number = stateKeysProps.reduce((prev, currentProps) => {
+      const currentLabel = currentProps.label ?? currentProps.key
+      if (currentLabel.length > prev) {
+        return currentLabel.length
+      }
+      return prev
+    }, 0)
+    return maxLabelLength * averageCharWidth
+  }
+  return 30
+}
+
+export function render(graphData: GraphData) {
+  const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth, legend } =
+    graphData.options
+
+  const margin = {
+      top: 20,
+      right: getMarginRight(legend === "line", stateKeysProps),
+      bottom: 30,
+      left: 60,
+    },
     width = output.clientWidth - margin.left - margin.right,
     height = heightPx - margin.top - margin.bottom
 
@@ -72,16 +94,18 @@ export function render(graphData: GraphData) {
       )
   }
 
-  container
-    .selectAll("text.label")
-    .data(stateKeysProps)
-    .join("text")
-    .attr("class", "label")
-    .attr("x", width + 5)
-    .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
-    .style("fill", (_, index) => colors[index])
-    .style("font-size", 8)
-    .text((props) => props.label ?? props.key)
+  if (legend === "line") {
+    container
+      .selectAll("text.label")
+      .data(stateKeysProps)
+      .join("text")
+      .attr("class", "label")
+      .attr("x", width + 5)
+      .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
+      .style("fill", (_, index) => colors[index])
+      .style("font-size", 8)
+      .text((props) => props.label ?? props.key)
+  }
 
   output.replaceChildren(svg.node()!)
 }

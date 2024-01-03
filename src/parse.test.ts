@@ -25,6 +25,7 @@ describe("parse", () => {
         stateKeysProps: [{ key: "a", label: "A", color: "red" }],
         graphType: "line",
         strokeWidth: 2,
+        legend: "line",
       },
     }
     expect(parseResult.graphData).toEqual(expected)

@@ -30,6 +30,7 @@ export type GraphOptions = {
   stateKeysProps: Array<StateKeyProps>
   graphType: "line" | "area"
   strokeWidth: number
+  legend: "none" | "line"
 }
 
 export type StateKeyProps = {

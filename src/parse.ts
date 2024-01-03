@@ -123,6 +123,7 @@ export function parse(input: string): { log: Log; graphData: GraphData | null } 
     stateKeysProps: context.stateKeysProps,
     graphType: rawOptions.graphType && rawOptions.graphType.value === "area" ? "area" : "line",
     strokeWidth: rawOptions.strokeWidth ? Number(rawOptions.strokeWidth.value) : defaultStrokeWidth,
+    legend: rawOptions.legend && rawOptions.legend.value === "none" ? "none" : "line",
   }
   if (log.length > 0) {
     return { log, graphData: null }
