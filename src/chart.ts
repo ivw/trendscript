@@ -29,6 +29,11 @@ export function render(graphData: GraphData) {
   const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth, legend } =
     graphData.options
 
+  if (!(heightPx > 0)) {
+    output.replaceChildren()
+    return
+  }
+
   const margin = {
       top: 20,
       right: getMarginRight(legend === "line", stateKeysProps),
