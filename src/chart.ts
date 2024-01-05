@@ -127,9 +127,8 @@ export function render(graphData: GraphData) {
     .data(graphData.data)
     .join("text")
     .attr("class", "focusLabel")
-    .attr("filter", "url(#outline)")
     .attr("x", 5)
-    .style("fill", (_, index) => colors[index])
+    .style("fill", "white")
     .style("font-size", 8)
 
   // Mouse events box:

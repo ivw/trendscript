@@ -69,3 +69,15 @@ textarea#code-input {
   overflow: auto;
   border-top: 1px solid gray;
 }
+
+#chart .focusLabel {
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: #242424;
+  stroke-width: 4px;
+  stroke-linecap: butt;
+  stroke-linejoin: miter;
+}
+#chart .label {
+  font-weight: 600;
+}
