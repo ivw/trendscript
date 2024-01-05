@@ -1,13 +1,15 @@
 import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
 import { interpolateTurbo } from "d3-scale-chromatic"
-import { create, pointer } from "d3-selection"
+import { select, pointer } from "d3-selection"
 import { area, line } from "d3-shape"
 import { addDays } from "date-fns"
 import last from "lodash/last"
+import round from "lodash/round"
 import { GraphData, StateKeyProps } from "./evaluate"
 
 const output = document.getElementById("output")!
+const chartContainer = document.getElementById("chart-container")!
 
 const averageCharWidth = 10 // An estimate.
 
@@ -29,8 +31,9 @@ export function render(graphData: GraphData) {
   const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth, legend } =
     graphData.options
 
+  chartContainer.replaceChildren()
+
   if (!(heightPx > 0)) {
-    output.replaceChildren()
     return
   }
 
@@ -51,11 +54,13 @@ export function render(graphData: GraphData) {
       stateKeyProps.color ?? interpolateTurbo((index + 1) / (stateKeysProps.length + 1)),
   )
 
-  const svg = create("svg")
+  const svg = select("#chart")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
 
-  const container = svg.append("g").attr("transform", `translate(${margin.left}, ${margin.top})`)
+  const container = svg
+    .select("#chart-container")
+    .attr("transform", `translate(${margin.left}, ${margin.top})`)
 
   container
     .append("g")
@@ -122,6 +127,8 @@ export function render(graphData: GraphData) {
     .data(graphData.data)
     .join("text")
     .attr("class", "focusLabel")
+    .attr("filter", "url(#outline)")
+    .attr("x", 5)
     .style("fill", (_, index) => colors[index])
     .style("font-size", 8)
 
@@ -140,11 +147,9 @@ export function render(graphData: GraphData) {
       const day = Math.round((x / width) * nrDays)
 
       focusContainer.attr("transform", `translate(${x},0)`)
-      focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${d[day]}`)
+      focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${round(d[day], 2)}`)
     })
     .on("mouseout", () => {
       focusContainer.style("opacity", 0)
     })
-
-  output.replaceChildren(svg.node()!)
 }

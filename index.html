@@ -18,7 +18,23 @@
       ></textarea>
       <div id="code-messages"></div>
     </div>
-    <div id="output"></div>
+    <div id="output">
+      <svg id="chart">
+        <defs>
+          <filter id="outline">
+            <feGaussianBlur stdDeviation="1.5" result="b" />
+            <feComponentTransfer in="b" result="shadow">
+              <feFuncA type="table" tableValues="0 1 1 1 1 1" />
+              <feFuncR type="discrete" tableValues="0" />
+              <feFuncG type="discrete" tableValues="0" />
+              <feFuncB type="discrete" tableValues="0" />
+            </feComponentTransfer>
+            <feComposite operator="over" in="SourceGraphic" in2="shadow" />
+          </filter>
+        </defs>
+        <g id="chart-container"></g>
+      </svg>
+    </div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
