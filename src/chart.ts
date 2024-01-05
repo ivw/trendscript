@@ -1,8 +1,8 @@
 import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
 import { interpolateTurbo } from "d3-scale-chromatic"
-import { create } from "d3-selection"
-import { line, area } from "d3-shape"
+import { create, pointer } from "d3-selection"
+import { area, line } from "d3-shape"
 import { addDays } from "date-fns"
 import last from "lodash/last"
 import { GraphData, StateKeyProps } from "./evaluate"
@@ -99,6 +99,7 @@ export function render(graphData: GraphData) {
       )
   }
 
+  // Legend:
   if (legend === "line") {
     container
       .selectAll("text.label")
@@ -111,6 +112,39 @@ export function render(graphData: GraphData) {
       .style("font-size", 8)
       .text((props) => props.label ?? props.key)
   }
+
+  const focusContainer = container.append("g").style("opacity", 0)
+  // Vertical line:
+  focusContainer.append("rect").attr("width", 1).attr("height", height).attr("fill", "gray")
+
+  const focusLabels = focusContainer
+    .selectAll("text.focusLabel")
+    .data(graphData.data)
+    .join("text")
+    .attr("class", "focusLabel")
+    .style("fill", (_, index) => colors[index])
+    .style("font-size", 8)
+
+  // Mouse events box:
+  container
+    .append("rect")
+    .style("fill", "none")
+    .style("pointer-events", "all")
+    .attr("width", width)
+    .attr("height", height)
+    .on("mouseover", () => {
+      focusContainer.style("opacity", 1)
+    })
+    .on("mousemove", (e: MouseEvent) => {
+      const [x] = pointer(e)
+      const day = Math.round((x / width) * nrDays)
+
+      focusContainer.attr("transform", `translate(${x},0)`)
+      focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${d[day]}`)
+    })
+    .on("mouseout", () => {
+      focusContainer.style("opacity", 0)
+    })
 
   output.replaceChildren(svg.node()!)
 }
