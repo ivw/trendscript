@@ -144,9 +144,10 @@ export function render(graphData: GraphData) {
     .on("mousemove", (e: MouseEvent) => {
       const [x] = pointer(e)
       const day = Math.round((x / width) * nrDays)
-
-      focusContainer.attr("transform", `translate(${x},0)`)
-      focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${round(d[day], 2)}`)
+      if (day >= 0 && day < nrDays) {
+        focusContainer.attr("transform", `translate(${x},0)`)
+        focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${round(d[day], 2)}`)
+      }
     })
     .on("mouseout", () => {
       focusContainer.style("opacity", 0)
