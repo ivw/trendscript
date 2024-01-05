@@ -35,7 +35,7 @@ export type GraphOptions = {
 
 export type StateKeyProps = {
   key: string
-  label?: string
+  label: string
   color?: string
 }
 

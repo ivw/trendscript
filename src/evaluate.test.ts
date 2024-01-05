@@ -36,6 +36,9 @@ test("getGraphData", () => {
     nrDays,
     heightPx: 200,
     stateKeysProps: [{ key: "foo", label: "foo", color: "red" }],
+    graphType: "line",
+    strokeWidth: 2,
+    legend: "line",
   }
 
   const expected: GraphData = {

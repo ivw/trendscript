@@ -16,9 +16,8 @@ const averageCharWidth = 10 // An estimate.
 function getMarginRight(isLineLegend: boolean, stateKeysProps: Array<StateKeyProps>) {
   if (isLineLegend) {
     const maxLabelLength: number = stateKeysProps.reduce((prev, currentProps) => {
-      const currentLabel = currentProps.label ?? currentProps.key
-      if (currentLabel.length > prev) {
-        return currentLabel.length
+      if (currentProps.label.length > prev) {
+        return currentProps.label.length
       }
       return prev
     }, 0)
@@ -115,7 +114,7 @@ export function render(graphData: GraphData) {
       .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
       .style("fill", (_, index) => colors[index])
       .style("font-size", 8)
-      .text((props) => props.label ?? props.key)
+      .text((props) => props.label)
   }
 
   const focusContainer = container.append("g").style("opacity", 0)
@@ -146,7 +145,16 @@ export function render(graphData: GraphData) {
       const day = Math.round((x / width) * nrDays)
       if (day >= 0 && day < nrDays) {
         focusContainer.attr("transform", `translate(${x},0)`)
-        focusLabels.attr("y", (d) => yScale(d[day]) + 4).text((d) => `${round(d[day], 2)}`)
+        focusLabels
+          .attr("y", (d) => yScale(d[day]) + 4)
+          .text((d, index) => {
+            const value = round(d[day], 2)
+            if (legend === "none") {
+              const { label } = stateKeysProps[index]
+              return `${label}: ${value}`
+            }
+            return value
+          })
       }
     })
     .on("mouseout", () => {

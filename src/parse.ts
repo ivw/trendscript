@@ -148,7 +148,7 @@ function parseDeclaration(ctx: DeclarationContext, context: ParseContext) {
       if (options.color?.value !== "hidden") {
         context.stateKeysProps.push({
           key: name,
-          label: options.label ? String(options.label.value) : undefined,
+          label: options.label ? String(options.label.value) : name,
           color: options.color ? String(options.color.value) : undefined,
         })
       }
