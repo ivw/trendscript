@@ -8,7 +8,8 @@ export const emptyDatePattern: DatePattern = () => false
  *
  * @param year
  * @param month
- * @param day If negative, represents days before end of month.
+ * @param day If past the number of days in the month,
+ *   then it will be treated as the last day in the month.
  * @returns
  */
 export function createDatePattern(
@@ -17,27 +18,9 @@ export function createDatePattern(
   day: number | null,
 ): DatePattern {
   return (date) => {
-    if (year !== null) {
-      if (year >= 0) {
-        if (date.getFullYear() !== year) return false
-      } else {
-        return false
-      }
-    }
-    if (month !== null) {
-      if (month >= 0) {
-        if (date.getMonth() + 1 !== month) return false
-      } else {
-        return false
-      }
-    }
-    if (day !== null) {
-      if (day >= 0) {
-        if (date.getDate() + 1 !== day) return false
-      } else {
-        if (date.getDate() - getDaysInMonth(date) !== day) return false
-      }
-    }
+    if (year !== null && date.getFullYear() !== year) return false
+    if (month !== null && date.getMonth() + 1 !== month) return false
+    if (day !== null && date.getDate() !== Math.min(day, getDaysInMonth(date))) return false
     return true
   }
 }

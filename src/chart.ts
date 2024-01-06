@@ -137,7 +137,7 @@ export function render(graphData: GraphData) {
     })
     .on("mousemove", (e: MouseEvent) => {
       const [x] = pointer(e)
-      const day = Math.round((x / width) * nrDays)
+      const day = Math.floor((x / width) * nrDays)
       if (day >= 0 && day < nrDays) {
         const date = addDays(startDate, day)
         focusContainer.attr("transform", `translate(${x},0)`)

@@ -31,8 +31,8 @@ numberOperator: '+' | '-' | '*' | '/';
 
 datePatternExpression: datePattern | Name;
 
-datePattern: datePatternPart '/' datePatternPart '/' datePatternPart;
-datePatternPart: ('-'? DecimalLiteral) | '*';
+datePattern: datePatternPart '-' datePatternPart '-' datePatternPart;
+datePatternPart: DecimalLiteral | '*';
 
 booleanExpression: numberExpression comparisonOperator numberExpression;
 

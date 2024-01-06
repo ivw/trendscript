@@ -7,7 +7,7 @@ describe("parse", () => {
     const code = `
       var a = 1 { label: "A", color: "red" }
 
-      date b = */*/*
+      date b = *-*-*
 
       at b, a += 1
 
@@ -19,7 +19,7 @@ describe("parse", () => {
       data: [[2, 3, 4]],
       range: [0, 4],
       options: {
-        startDate: new Date(2000, 1, 2),
+        startDate: new Date(2000, 2 - 1, 2),
         nrDays: 3,
         heightPx: 200,
         stateKeysProps: [{ key: "a", label: "A", color: "red" }],
