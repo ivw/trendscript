@@ -1,3 +1,4 @@
+import { interpolateTurbo } from "d3-scale-chromatic"
 import { addDays, startOfDay } from "date-fns"
 
 export type State = Record<string, number>
@@ -61,4 +62,11 @@ export function getGraphData(
     })
   })
   return { data, range: [min, max], options }
+}
+
+export function generateColors(stateKeysProps: Array<StateKeyProps>) {
+  const colorlessItems = stateKeysProps.filter(({ color }) => color === undefined)
+  colorlessItems.forEach((it, index) => {
+    it.color = interpolateTurbo((index + 1) / (colorlessItems.length + 1))
+  })
 }

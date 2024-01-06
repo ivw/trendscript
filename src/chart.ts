@@ -1,7 +1,6 @@
 import { axisBottom, axisLeft } from "d3-axis"
 import { scaleLinear, scaleTime } from "d3-scale"
-import { interpolateTurbo } from "d3-scale-chromatic"
-import { select, pointer } from "d3-selection"
+import { pointer, select } from "d3-selection"
 import { area, line } from "d3-shape"
 import { addDays } from "date-fns"
 import last from "lodash/last"
@@ -45,11 +44,6 @@ export function render(graphData: GraphData) {
   const xScale = scaleTime([startDate, addDays(startDate, nrDays - 1)], [0, width])
   const yScale = scaleLinear(graphData.range, [height, 0])
 
-  const colors = stateKeysProps.map(
-    (stateKeyProps, index) =>
-      stateKeyProps.color ?? interpolateTurbo((index + 1) / (stateKeysProps.length + 1)),
-  )
-
   const svg = select("#chart")
     .attr("width", width + margin.left + margin.right)
     .attr("height", height + margin.top + margin.bottom)
@@ -75,7 +69,7 @@ export function render(graphData: GraphData) {
       .data(graphData.data)
       .join("path")
       .attr("fill", "none")
-      .attr("stroke", (_, index) => colors[index])
+      .attr("stroke", (_, index) => stateKeysProps[index].color ?? "white")
       .attr("stroke-width", strokeWidth)
       .attr(
         "d",
@@ -90,7 +84,7 @@ export function render(graphData: GraphData) {
       .append("path")
       .data(graphData.data)
       .join("path")
-      .attr("fill", (_, index) => colors[index])
+      .attr("fill", (_, index) => stateKeysProps[index].color ?? "white")
       .attr(
         "d",
         area<number>()
@@ -109,8 +103,8 @@ export function render(graphData: GraphData) {
       .attr("class", "label")
       .attr("x", width + 5)
       .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
-      .style("fill", (_, index) => colors[index])
-      .text((props) => props.label)
+      .style("fill", ({ color }) => color ?? "white")
+      .text(({ label }) => label)
   }
 
   const focusContainer = container.append("g").style("opacity", 0)

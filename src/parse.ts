@@ -28,6 +28,7 @@ import {
   MutateState,
   State,
   StateKeyProps,
+  generateColors,
   getGraphData,
 } from "./evaluate"
 import { DatePattern, createDatePattern, emptyDatePattern } from "./utils/dateUtils"
@@ -131,6 +132,7 @@ export function parse(input: string): { log: Log; graphData: GraphData | null } 
   const mutateState: MutateState = (state, date, day) => {
     context.rules.forEach((rule) => rule(state, date, day))
   }
+  generateColors(graphOptions.stateKeysProps)
   const graphData = getGraphData(context.initialState, mutateState, graphOptions)
   return { log, graphData }
 }
