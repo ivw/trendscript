@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "test": "vitest",
-    "generateParser": "antlr4ng -Dlanguage=TypeScript -o generated/ -Xexact-output-dir src/TrendScript.g4"
+    "generateParser": "antlr4ng -Dlanguage=TypeScript -o generated/ -Xexact-output-dir src/TrendScript.g4",
+    "format": "prettier --write src"
   },
   "devDependencies": {
     "antlr4ng-cli": "^1.0.7",
