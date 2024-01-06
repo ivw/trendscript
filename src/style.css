@@ -70,14 +70,15 @@ textarea#code-input {
   border-top: 1px solid gray;
 }
 
+#chart .label,
 #chart .focusLabel {
+  font-size: 14px;
   font-weight: 600;
+}
+#chart .focusLabel {
   paint-order: stroke;
   stroke: #242424;
   stroke-width: 4px;
   stroke-linecap: butt;
   stroke-linejoin: miter;
-}
-#chart .label {
-  font-weight: 600;
 }

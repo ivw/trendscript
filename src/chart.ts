@@ -11,19 +11,16 @@ import { GraphData, StateKeyProps } from "./evaluate"
 const output = document.getElementById("output")!
 const chartContainer = document.getElementById("chart-container")!
 
-const averageCharWidth = 10 // An estimate.
+const estimatedCharWidth = 10
 
-function getMarginRight(isLineLegend: boolean, stateKeysProps: Array<StateKeyProps>) {
-  if (isLineLegend) {
-    const maxLabelLength: number = stateKeysProps.reduce((prev, currentProps) => {
-      if (currentProps.label.length > prev) {
-        return currentProps.label.length
-      }
-      return prev
-    }, 0)
-    return maxLabelLength * averageCharWidth
-  }
-  return 30
+function getMarginRight(stateKeysProps: Array<StateKeyProps>) {
+  const maxLabelLength: number = stateKeysProps.reduce((prev, currentProps) => {
+    if (currentProps.label.length > prev) {
+      return currentProps.label.length
+    }
+    return prev
+  }, 0)
+  return maxLabelLength * estimatedCharWidth
 }
 
 export function render(graphData: GraphData) {
@@ -38,7 +35,7 @@ export function render(graphData: GraphData) {
 
   const margin = {
       top: 20,
-      right: getMarginRight(legend === "line", stateKeysProps),
+      right: getMarginRight(stateKeysProps),
       bottom: 30,
       left: 60,
     },
@@ -113,13 +110,18 @@ export function render(graphData: GraphData) {
       .attr("x", width + 5)
       .attr("y", (_, index) => yScale(last(graphData.data[index]) ?? 0) + 4)
       .style("fill", (_, index) => colors[index])
-      .style("font-size", 8)
       .text((props) => props.label)
   }
 
   const focusContainer = container.append("g").style("opacity", 0)
   // Vertical line:
   focusContainer.append("rect").attr("width", 1).attr("height", height).attr("fill", "gray")
+
+  const focusDateText = focusContainer
+    .append("text")
+    .attr("y", -4)
+    .style("fill", "currentColor")
+    .attr("font-size", 12)
 
   const focusLabels = focusContainer
     .selectAll("text.focusLabel")
@@ -128,7 +130,6 @@ export function render(graphData: GraphData) {
     .attr("class", "focusLabel")
     .attr("x", 5)
     .style("fill", "white")
-    .style("font-size", 8)
 
   // Mouse events box:
   container
@@ -144,7 +145,9 @@ export function render(graphData: GraphData) {
       const [x] = pointer(e)
       const day = Math.round((x / width) * nrDays)
       if (day >= 0 && day < nrDays) {
+        const date = addDays(startDate, day)
         focusContainer.attr("transform", `translate(${x},0)`)
+        focusDateText.text(date.toLocaleDateString())
         focusLabels
           .attr("y", (d) => yScale(d[day]) + 4)
           .text((d, index) => {
