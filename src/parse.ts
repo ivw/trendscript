@@ -11,8 +11,10 @@ import {
   ActionBlockContext,
   ActionContext,
   BinaryFunctionNumberExpressionContext,
+  BinaryOperatorBooleanExpressionContext,
   BlockActionContext,
   BooleanExpressionContext,
+  ComparisonBooleanExpressionContext,
   ConditionalActionContext,
   DateDeclarationContext,
   DatePatternContext,
@@ -24,6 +26,7 @@ import {
   OperatorActionContext,
   OperatorNumberExpressionContext,
   OptionsBlockContext,
+  ParenBooleanExpressionContext,
   ParenNumberExpressionContext,
   ReferenceNumberExpressionContext,
   RuleDeclarationContext,
@@ -389,6 +392,21 @@ function parseBooleanExpression(
   ctx: BooleanExpressionContext,
   context: ParseContext,
 ): BooleanExpression {
+  if (ctx instanceof ComparisonBooleanExpressionContext) {
+    return parseComparisonBooleanExpression(ctx, context)
+  } else if (ctx instanceof ParenBooleanExpressionContext) {
+    return parseBooleanExpression(ctx.booleanExpression(), context)
+  } else if (ctx instanceof BinaryOperatorBooleanExpressionContext) {
+    return parseBinaryOperatorBooleanExpression(ctx, context)
+  } else {
+    throw new Error()
+  }
+}
+
+function parseComparisonBooleanExpression(
+  ctx: ComparisonBooleanExpressionContext,
+  context: ParseContext,
+): BooleanExpression {
   const aExpression = parseNumberExpression(ctx.numberExpression(0)!, context)
   const bExpression = parseNumberExpression(ctx.numberExpression(1)!, context)
   const operator = ctx.comparisonOperator().getText()
@@ -410,6 +428,33 @@ function parseBooleanExpression(
       }
       case "<=": {
         return a <= b
+      }
+      default: {
+        throw new Error()
+      }
+    }
+  }
+}
+
+function parseBinaryOperatorBooleanExpression(
+  ctx: BinaryOperatorBooleanExpressionContext,
+  context: ParseContext,
+): BooleanExpression {
+  const aExpression = parseBooleanExpression(ctx.booleanExpression(0)!, context)
+  const bExpression = parseBooleanExpression(ctx.booleanExpression(1)!, context)
+  const operator = ctx.binaryBooleanOperator().getText()
+  return (state) => {
+    const a = aExpression(state)
+    const b = bExpression(state)
+    switch (operator) {
+      case "&&": {
+        return a && b
+      }
+      case "||": {
+        return a || b
+      }
+      case "==": {
+        return a == b
       }
       default: {
         throw new Error()

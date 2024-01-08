@@ -41,9 +41,15 @@ datePatternExpression: datePattern | Name;
 datePattern: datePatternPart '-' datePatternPart '-' datePatternPart;
 datePatternPart: DecimalLiteral | '*';
 
-booleanExpression: numberExpression comparisonOperator numberExpression;
+booleanExpression
+  : numberExpression comparisonOperator numberExpression # ComparisonBooleanExpression
+  | '(' booleanExpression ')' # ParenBooleanExpression
+  | booleanExpression binaryBooleanOperator booleanExpression # BinaryOperatorBooleanExpression
+  ;
 
 comparisonOperator: '==' | '>' | '<' | '>=' | '<=';
+
+binaryBooleanOperator: '&&' | '||' | '==';
 
 optionsBlock: '{' NL* (option ((',' | NL+) option)* NL*)? '}';
 
