@@ -4,6 +4,7 @@ import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
   ActionBlockContext,
   ActionContext,
+  BinaryFunctionNumberExpressionContext,
   BlockActionContext,
   BooleanExpressionContext,
   ConditionalActionContext,
@@ -21,6 +22,7 @@ import {
   ReferenceNumberExpressionContext,
   RuleDeclarationContext,
   TrendScriptParser,
+  UnaryFunctionNumberExpressionContext,
   VarDeclarationContext,
 } from "../generated/TrendScriptParser"
 import {
@@ -277,6 +279,15 @@ function parseNumberExpression(
     return (state) => state[name]
   } else if (ctx instanceof OperatorNumberExpressionContext) {
     return parseOperatorNumberExpression(ctx, context)
+  } else if (ctx instanceof UnaryFunctionNumberExpressionContext) {
+    const numberExpression = parseNumberExpression(ctx.numberExpression(), context)
+    const functionName = ctx.unaryNumberFunction().getText()
+    return (state) => (Math as any)[functionName](numberExpression(state))
+  } else if (ctx instanceof BinaryFunctionNumberExpressionContext) {
+    const aExpression = parseNumberExpression(ctx.numberExpression(0)!, context)
+    const bExpression = parseNumberExpression(ctx.numberExpression(1)!, context)
+    const functionName = ctx.binaryNumberFunction().getText()
+    return (state) => (Math as any)[functionName](aExpression(state), bExpression(state))
   } else {
     throw new Error()
   }

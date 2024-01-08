@@ -26,9 +26,15 @@ numberExpression
   | '(' numberExpression ')' # ParenNumberExpression
   | Name # ReferenceNumberExpression
   | numberExpression numberOperator numberExpression # OperatorNumberExpression
+  | unaryNumberFunction '(' NL* numberExpression NL* ')' # UnaryFunctionNumberExpression
+  | binaryNumberFunction '(' NL* numberExpression (',' | NL+) numberExpression NL* ')' # BinaryFunctionNumberExpression
   ;
 
 numberOperator: '+' | '-' | '*' | '/' | '**' | '%';
+
+unaryNumberFunction: 'sqrt' | 'log' | 'abs' | 'round' | 'floor' | 'ceil';
+
+binaryNumberFunction: 'min' | 'max';
 
 datePatternExpression: datePattern | Name;
 
