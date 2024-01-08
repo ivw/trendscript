@@ -1,5 +1,5 @@
 export const defaultInput = `var account = 10000 { label: "Checking account" }
-var investment = 10000
+var investment = 0
 var investmentReturnMonthly = 1 + (.8 / 100) { color: "hidden" }
 var salaryMonthly = 5000
 var costOfLivingMonthly = 3000 { color: "hidden" }
@@ -12,7 +12,7 @@ at endOfMonth, {
   investment *= investmentReturnMonthly
   account -= costOfLivingMonthly
 
-  if (account > 30000) {
+  if (account > 30000 && account > investment / 2) {
     account -= 10000
     investment += 10000
   }
