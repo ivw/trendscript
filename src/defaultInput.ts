@@ -24,9 +24,10 @@ at endOfYear, {
   costOfLivingMonthly *= 1.05 // the way it is
 }
 
-at 2025-03-15, account += 1000
+at 2024-03-15, account += 2000
 
 options {
+  startDate: "Jan 1 2024"
   duration: "5y"
   height: 200
 }
