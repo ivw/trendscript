@@ -79,7 +79,7 @@ type BooleanExpression = (state: State) => boolean
 
 type RawOptions = Record<string, RawOption>
 
-type RawOption = { value: string | number; node: TerminalNode }
+type RawOption = { value: string | number; ctx: ParserRuleContext }
 
 const defaultDuration = 365 * 5
 
@@ -431,7 +431,7 @@ function parseOptionsBlock(ctx: OptionsBlockContext, context: ParseContext): Raw
       value: numberExpressionCtx
         ? parseNumberExpression(numberExpressionCtx, context)(context.initialState)
         : parseStringLiteral(optionCtx.StringLiteral()!),
-      node: optionCtx.Name(),
+      ctx: optionCtx,
     }
   })
   return options
@@ -455,6 +455,6 @@ function parseDuration(rawOption: RawOption, log: Log): number {
       default:
     }
   }
-  log.push(msgFromNode(rawOption.node, `duration should be formatted like \`123d\` (d/w/m/y)`))
+  log.push(msgFromRule(rawOption.ctx, `duration should be formatted like \`123d\` (d/w/m/y)`))
   return defaultDuration
 }
