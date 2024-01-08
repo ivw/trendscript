@@ -1,18 +1,32 @@
 export const defaultInput = `var account = 10000 { label: "Checking account" }
-var salary = 1234 { color: "red" }
-var foo = 0
+var investment = 10000
+var investmentReturnMonthly = 1 + (.8 / 100) { color: "hidden" }
+var salaryMonthly = 5000
+var costOfLivingMonthly = 3000 { color: "hidden" }
 
 date endOfYear = *-12-31
 date endOfMonth = *-*-31
-date endOfDay = *-*-*
-date everyBirthday = *-1-2
 
-at endOfMonth, if (account < 18000) { account += salary } else { account -= 100 }
-at everyBirthday, account += 100
-at endOfDay, { foo += 5; foo *= 1.001 }
+at endOfMonth, {
+  account += salaryMonthly
+  investment *= investmentReturnMonthly
+  account -= costOfLivingMonthly
+
+  if (account > 30000) {
+    account -= 10000
+    investment += 10000
+  }
+}
+
+at endOfYear, {
+  account += salaryMonthly // bonus
+  salaryMonthly *= 1.05 // raise
+  costOfLivingMonthly *= 1.05 // the way it is
+}
+
+at 2025-03-15, account += 1000
 
 options {
-  // startDate: "2024-01-01"
   duration: "5y"
   height: 200
 }
