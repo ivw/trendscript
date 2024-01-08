@@ -1,4 +1,10 @@
-import { ANTLRErrorListener, CharStreams, CommonTokenStream, TerminalNode } from "antlr4ng"
+import {
+  ANTLRErrorListener,
+  CharStreams,
+  CommonTokenStream,
+  ParserRuleContext,
+  TerminalNode,
+} from "antlr4ng"
 import { startOfDay } from "date-fns"
 import { TrendScriptLexer } from "../generated/TrendScriptLexer"
 import {
@@ -54,6 +60,11 @@ export type Msg = {
 
 function msgFromNode(node: TerminalNode, msg: string): Msg {
   return { line: node.symbol.line, charPositionInLine: node.symbol.column + 1, msg }
+}
+
+function msgFromRule(ctx: ParserRuleContext, msg: string): Msg {
+  const start = ctx.start!
+  return { line: start.line, charPositionInLine: start.column + 1, msg }
 }
 
 type Action = (state: State) => void
@@ -293,10 +304,25 @@ function parseNumberExpression(
   }
 }
 
+function isOperatorMixing(ctx: OperatorNumberExpressionContext) {
+  const operator = ctx.numberOperator().getText()
+  const a = ctx.numberExpression(0)!
+  if (a instanceof OperatorNumberExpressionContext && a.numberOperator().getText() !== operator) {
+    return true
+  }
+  const b = ctx.numberExpression(0)!
+  if (b instanceof OperatorNumberExpressionContext && b.numberOperator().getText() !== operator) {
+    return true
+  }
+}
+
 function parseOperatorNumberExpression(
   ctx: OperatorNumberExpressionContext,
   context: ParseContext,
 ): NumberExpression {
+  if (isOperatorMixing(ctx)) {
+    context.log.push(msgFromRule(ctx, "No operator mixing. Use () to specify order."))
+  }
   const aExpression = parseNumberExpression(ctx.numberExpression(0)!, context)
   const bExpression = parseNumberExpression(ctx.numberExpression(1)!, context)
   const operator = ctx.numberOperator().getText()
