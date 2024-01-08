@@ -19,15 +19,16 @@ action
 
 actionBlock: '{' NL* (action ((';' | NL+) action)* NL*)? '}';
 
-actionOperator: '=' | '+=' | '-=' | '*=' | '/=';
+actionOperator: '=' | '+=' | '-=' | '*=' | '/=' | '**=' | '%=';
 
 numberExpression
   : '-'? DecimalLiteral # LiteralNumberExpression
+  | '(' numberExpression ')' # ParenNumberExpression
   | Name # ReferenceNumberExpression
   | numberExpression numberOperator numberExpression # OperatorNumberExpression
   ;
 
-numberOperator: '+' | '-' | '*' | '/';
+numberOperator: '+' | '-' | '*' | '/' | '**' | '%';
 
 datePatternExpression: datePattern | Name;
 

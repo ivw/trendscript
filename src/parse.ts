@@ -17,6 +17,7 @@ import {
   OperatorActionContext,
   OperatorNumberExpressionContext,
   OptionsBlockContext,
+  ParenNumberExpressionContext,
   ReferenceNumberExpressionContext,
   RuleDeclarationContext,
   TrendScriptParser,
@@ -220,6 +221,14 @@ function parseOperatorAction(ctx: OperatorActionContext, context: ParseContext):
         state[name] /= number
         break
       }
+      case "**=": {
+        state[name] **= number
+        break
+      }
+      case "%=": {
+        state[name] %= number
+        break
+      }
     }
   }
 }
@@ -257,6 +266,8 @@ function parseNumberExpression(
   if (ctx instanceof LiteralNumberExpressionContext) {
     const number = Number.parseFloat(ctx.getText())
     return () => number
+  } else if (ctx instanceof ParenNumberExpressionContext) {
+    return parseNumberExpression(ctx.numberExpression(), context)
   } else if (ctx instanceof ReferenceNumberExpressionContext) {
     const name = ctx.Name().getText()
     if (!(name in context.initialState)) {
@@ -293,6 +304,12 @@ function parseOperatorNumberExpression(
       }
       case "/": {
         return a / b
+      }
+      case "**": {
+        return a ** b
+      }
+      case "%": {
+        return a % b
       }
       default: {
         throw new Error()
