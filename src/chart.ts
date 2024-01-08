@@ -10,7 +10,12 @@ import { GraphData, StateKeyProps } from "./evaluate"
 const output = document.getElementById("output")!
 const chartContainer = document.getElementById("chart-container")!
 
-const estimatedCharWidth = 10
+function getMarginLeft(yRange: [number, number]): number {
+  const maxStringLength = yRange.reduce((prev, current) => {
+    return Math.max(prev, Math.round(current).toString().length)
+  }, 0)
+  return maxStringLength * 6 + 22
+}
 
 function getMarginRight(stateKeysProps: Array<StateKeyProps>) {
   const maxLabelLength: number = stateKeysProps.reduce((prev, currentProps) => {
@@ -19,7 +24,7 @@ function getMarginRight(stateKeysProps: Array<StateKeyProps>) {
     }
     return prev
   }, 0)
-  return maxLabelLength * estimatedCharWidth
+  return maxLabelLength * 10
 }
 
 export function render(graphData: GraphData) {
@@ -33,13 +38,13 @@ export function render(graphData: GraphData) {
   }
 
   const margin = {
-      top: 20,
-      right: getMarginRight(stateKeysProps),
-      bottom: 30,
-      left: 60,
-    },
-    width = output.clientWidth - margin.left - margin.right,
-    height = heightPx - margin.top - margin.bottom
+    top: 20,
+    right: getMarginRight(stateKeysProps),
+    bottom: 30,
+    left: getMarginLeft(graphData.range),
+  }
+  const width = output.clientWidth - margin.left - margin.right
+  const height = heightPx - margin.top - margin.bottom
 
   const xScale = scaleTime([startDate, addDays(startDate, nrDays - 1)], [0, width])
   const yScale = scaleLinear(graphData.range, [height, 0])
