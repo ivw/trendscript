@@ -1,20 +1,23 @@
-export const defaultInput = `var account = 10000 { label: "Checking account" }
+export const defaultInput = `// Example: 5-year personal finance forecast
+// Play around with variables and rules, and see what kind of effect it has on the chart!
+
+var account = 10000 { label: "Checking account" }
 var investment = 0
 var investmentReturnMonthly = 1 + (.8 / 100) { color: "hidden" }
 var salaryMonthly = 5000
 var costOfLivingMonthly = 3000 { color: "hidden" }
 
-date endOfYear = *-12-31
 date endOfMonth = *-*-31
+date endOfYear = *-12-31
 
 at endOfMonth, {
   account += salaryMonthly
   investment *= investmentReturnMonthly
   account -= costOfLivingMonthly
 
-  if (account > 30000 && account > investment / 2) {
-    account -= 10000
-    investment += 10000
+  if (account > costOfLivingMonthly * 6 && account > investment / 2) {
+    account -= 5000
+    investment += 5000
   }
 }
 
