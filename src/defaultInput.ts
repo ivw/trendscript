@@ -1,5 +1,5 @@
 export const defaultInput = `// Example: 5-year personal finance forecast
-// Play around with variables and rules, and see what kind of effect it has on the chart!
+// Play around with variables and rules, and see how it affects the chart
 
 var account = 10000 { label: "Checking account" }
 var investment = 0

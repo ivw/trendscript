@@ -8,7 +8,7 @@ Test financial strategies, plot out complex supply chains, or forecast how much 
 
 ```
 // Example: 5-year personal finance forecast
-// Play around with variables and rules, and see what kind of effect it has on the chart!
+// Play around with variables and rules, and see how it affects the chart
 
 var account = 10000 { label: "Checking account" }
 var investment = 0
@@ -107,6 +107,8 @@ options {
   legend: "line" // Options: "line", "none"
 }
 ```
+
+Your code is saved to your browser's localStorage while editing. Your code is private and client-side only.
 
 ## Installation
 
