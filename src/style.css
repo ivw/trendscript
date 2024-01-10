@@ -25,12 +25,36 @@ body {
   align-items: stretch;
 }
 
+a {
+  font-weight: 500;
+  color: #646cff;
+  text-decoration: inherit;
+  display: flex;
+  align-items: center;
+}
+a:hover {
+  color: #535bf2;
+}
+a > img {
+  max-height: 1.2em;
+  margin-right: 4px;
+}
+
 #code-container {
   flex-grow: 1;
   overflow-y: auto;
   display: flex;
   flex-direction: row;
   align-items: stretch;
+  position: relative;
+}
+
+#menu {
+  position: absolute;
+  right: 20px;
+  padding: 2px;
+  bottom: 0;
+  background-color: #242424;
 }
 
 textarea#code-input {

@@ -1,4 +1,4 @@
-# TrendScript
+# [TrendScript](https://github.com/ivw/trendscript)
 
 TrendScript is a rule-based charting tool using an intuitive scripting language with real-time data visualization.
 
