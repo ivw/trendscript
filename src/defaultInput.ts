@@ -24,7 +24,7 @@ at endOfMonth, {
 at endOfYear, {
   account += salaryMonthly // bonus
   salaryMonthly *= 1.05 // raise
-  costOfLivingMonthly *= 1.05 // the way it is
+  costOfLivingMonthly *= 1.05 // inflation
 }
 
 at 2024-03-15, account += 2000

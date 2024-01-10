@@ -1,6 +1,8 @@
 # TrendScript
 
-TrendScript is web app where you use a simple scripting language to visualize values over time, based on custom rules.
+TrendScript is a rule-based charting tool using an intuitive scripting language with real-time data visualization.
+
+Test financial strategies, plot out complex supply chains, or forecast how much you can make before you retire. Anything you can think of that is numbers-over-time.
 
 ## Example code
 
@@ -31,7 +33,7 @@ at endOfMonth, {
 at endOfYear, {
   account += salaryMonthly // bonus
   salaryMonthly *= 1.05 // raise
-  costOfLivingMonthly *= 1.05 // the way it is
+  costOfLivingMonthly *= 1.05 // inflation
 }
 
 at 2024-03-15, account += 2000
