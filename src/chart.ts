@@ -59,7 +59,7 @@ export function render(graphData: GraphData) {
 
   container
     .append("g")
-    .attr("transform", `translate(0, ${height})`)
+    .attr("transform", `translate(0, ${yScale(0)})`)
     .call(
       axisBottom(xScale)
         .ticks(width / 100)
