@@ -139,7 +139,7 @@ export function parse(input: string): { log: Log; graphData: GraphData | null } 
     nrDays: rawOptions.duration ? parseDuration(rawOptions.duration, log) : defaultDuration,
     heightPx: rawOptions.height ? Number(rawOptions.height.value) : defaultHeightPx,
     stateKeysProps: context.stateKeysProps,
-    graphType: rawOptions.graphType && rawOptions.graphType.value === "area" ? "area" : "line",
+    chartType: rawOptions.chartType && rawOptions.chartType.value === "area" ? "area" : "line",
     strokeWidth: rawOptions.strokeWidth ? Number(rawOptions.strokeWidth.value) : defaultStrokeWidth,
     legend: rawOptions.legend && rawOptions.legend.value === "none" ? "none" : "line",
   }

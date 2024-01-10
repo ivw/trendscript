@@ -29,7 +29,7 @@ export type GraphOptions = {
   nrDays: number
   heightPx: number
   stateKeysProps: Array<StateKeyProps>
-  graphType: "line" | "area"
+  chartType: "line" | "area"
   strokeWidth: number
   legend: "none" | "line"
 }

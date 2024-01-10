@@ -28,7 +28,7 @@ function getMarginRight(stateKeysProps: Array<StateKeyProps>) {
 }
 
 export function render(graphData: GraphData) {
-  const { startDate, nrDays, heightPx, stateKeysProps, graphType, strokeWidth, legend } =
+  const { startDate, nrDays, heightPx, stateKeysProps, chartType, strokeWidth, legend } =
     graphData.options
 
   chartContainer.replaceChildren()
@@ -67,7 +67,7 @@ export function render(graphData: GraphData) {
     )
   container.append("g").call(axisLeft(yScale).ticks(height / 40))
 
-  if (graphType === "line") {
+  if (chartType === "line") {
     container
       .selectAll(".line")
       .append("path")
@@ -83,7 +83,7 @@ export function render(graphData: GraphData) {
           .y(yScale),
       )
   }
-  if (graphType === "area") {
+  if (chartType === "area") {
     container
       .selectAll(".line")
       .append("path")
